@@ -1,5 +1,5 @@
 import React from 'react';
-import CheckoutForm from '../components/cart/CheckOutForm';
+import CheckoutForm from '../components/cart/CheckoutForm';
 import { toast } from 'react-toastify';
 import useCart from '../hooks/useCart';
 
