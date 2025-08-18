@@ -1,0 +1,13 @@
+/* Đặt @import lên đầu */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
+
+/* Sau đó mới thêm @tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Style cho body */
+body {
+  font-family: 'Playfair Display', serif;
+  background-color: #F5F5F5;
+}
