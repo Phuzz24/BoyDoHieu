@@ -34,13 +34,13 @@ const Header = () => {
               <Link to="/" title="Web Đồ Hiệu" className="group">
                 <img
                   className="block w-auto h-14 dark:hidden transition-all duration-300 group-hover:scale-105 rounded-lg"
-                  src="/src/assets/logo.png"
+                  src="/logo.png"
                   alt="Web Đồ Hiệu Logo"
                   onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} // Fallback nếu logo không load
                 />
                 <img
                   className="hidden w-auto h-14 dark:block transition-all duration-300 group-hover:scale-105 rounded-lg"
-                  src="/src/assets/logo.png" // Thay bằng logo dark nếu có
+                  src="/logo.png" // Thay bằng logo dark nếu có
                   alt="Web Đồ Hiệu Logo Dark"
                   onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }}
                 />
