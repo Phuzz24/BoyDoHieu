@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 import { toast } from 'react-toastify';
 

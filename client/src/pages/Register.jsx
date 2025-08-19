@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import RegisterForm from '../components/auth/RegisterForm';
 import { toast } from 'react-toastify';
 import { registerUser } from '../services/authService';
