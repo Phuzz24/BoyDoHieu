@@ -1,78 +1,120 @@
-import React, { useEffect, useState } from 'react';
-import Slider from 'react-slick';
-import ProductCarousel from '../components/product/ProductCarousel';
-import ProductCard from '../components/product/ProductCard';
-import Loading from '../components/common/Loading';
-import Button from '../components/common/Button';
-import { getProducts } from '../services/productService';
-import { Link } from 'react-router-dom';
-import { FaStar } from 'react-icons/fa'; // Cài react-icons nếu cần: npm install react-icons
+import React, { useEffect, useState } from "react";
+import Slider from "react-slick";
+import ProductCarousel from "../components/product/ProductCarousel";
+import ProductCard from "../components/product/ProductCard";
+import Loading from "../components/common/Loading";
+import Button from "../components/common/Button";
+import { getProducts } from "../services/productService";
+import { Link } from "react-router-dom";
+import { FaStar, FaCheckCircle, FaDollarSign, FaShippingFast } from "react-icons/fa";
 
-// Dummy hero slides (thay bằng hình thật từ assets)
+// Dummy hero slides
 const heroSlides = [
   {
-    image: 'https://ecommerce-uikit.netlify.app/images/banners/main-fashion.png',
-    title: 'Bộ Sưu Tập Gucci Mới Nhất',
-    subtitle: 'Khám phá sự sang trọng đỉnh cao',
-    buttonText: 'Xem Ngay',
-    link: '/products/gucci',
+    image: "https://ecommerce-uikit.netlify.app/images/banners/main-fashion.png",
+    title: "Bộ Sưu Tập Gucci Mới Nhất",
+    subtitle: "Khám phá sự sang trọng đỉnh cao",
+    buttonText: "Xem Ngay",
+    link: "/products/gucci",
   },
   {
-    image: 'https://th.bing.com/th/id/R.65a229ec207cf42838f3e9813f64ab8b?rik=xwkRqx3fh1UWGQ&riu=http%3a%2f%2fn.sinaimg.cn%2fsinakd20118%2f609%2fw2048h961%2f20201115%2f5930-kcysmrv6605696.jpg&ehk=NaJ%2bKTgSBu6E95P7Xp%2b2GP4cN%2bVPAuJT91Yot6y3KuI%3d&risl=&pid=ImgRaw&r=0',
-    title: 'Burberry - Biểu Tượng Thời Trang',
-    subtitle: 'Áo khoác, túi xách cao cấp',
-    buttonText: 'Khám Phá',
-    link: '/products/burberry',
+    image:
+      "https://th.bing.com/th/id/R.65a229ec207cf42838f3e9813f64ab8b?rik=xwkRqx3fh1UWGQ&riu=http%3a%2f%2fn.sinaimg.cn%2fsinakd20118%2f609%2fw2048h961%2f20201115%2f5930-kcysmrv6605696.jpg&ehk=NaJ%2bKTgSBu6E95P7Xp%2b2GP4cN%2bVPAuJT91Yot6y3KuI%3d&risl=&pid=ImgRaw&r=0",
+    title: "Burberry - Biểu Tượng Thời Trang",
+    subtitle: "Áo khoác, túi xách cao cấp",
+    buttonText: "Khám Phá",
+    link: "/products/burberry",
   },
   {
-    image: 'https://media.wonderlandmagazine.com/uploads/2023/06/SS24_MENS_CAMPAIGN_Keiz_Kitajima_and_Martine_Syms_1-1-scaled.jpg',
-    title: 'Giày Dép Hiệu Cao Cấp',
-    subtitle: 'Thiết kế tinh tế, chất liệu premium',
-    buttonText: 'Mua Ngay',
-    link: '/products/giay-dep',
+    image:
+      "https://media.wonderlandmagazine.com/uploads/2023/06/SS24_MENS_CAMPAIGN_Keiz_Kitajima_and_Martine_Syms_1-1-scaled.jpg",
+    title: "Giày Dép Hiệu Cao Cấp",
+    subtitle: "Thiết kế tinh tế, chất liệu premium",
+    buttonText: "Mua Ngay",
+    link: "/products/giay-dep",
   },
 ];
 
-// Dummy categories for Shop by Category
+// Dummy categories
 const categories = [
   {
-    title: 'Nón',
-    image: 'https://via.placeholder.com/300?text=Nón+Gucci',
-    link: '/products/non',
+    title: "Nón",
+    image: "https://picsum.photos/300/200?random=4",
+    link: "/products/non",
   },
   {
-    title: 'Áo',
-    image: 'https://via.placeholder.com/300?text=Áo+Burberry',
-    link: '/products/ao',
+    title: "Áo",
+    image: "https://picsum.photos/300/200?random=5",
+    link: "/products/ao",
   },
   {
-    title: 'Giày dép',
-    image: 'https://via.placeholder.com/300?text=Giày+Gucci',
-    link: '/products/giay-dep',
+    title: "Giày dép",
+    image: "https://picsum.photos/300/200?random=6",
+    link: "/products/giay-dep",
   },
   {
-    title: 'Phụ kiện',
-    image: 'https://via.placeholder.com/300?text=Phụ+kiện+Chanel',
-    link: '/products/phu-kien',
+    title: "Phụ kiện",
+    image: "https://picsum.photos/300/200?random=7",
+    link: "/products/phu-kien",
   },
 ];
 
-// Dummy reviews for customer feedback
+const dummyFeaturedProducts = [
+  {
+  _id: "1",
+  name: "Nón Gucci Classic",
+  brand: "Gucci",
+  price: 200,
+  image: "https://picsum.photos/300/200?random=8",
+  rating: 4.5, // Điểm đánh giá
+  numReviews: 120, // Số lượt đánh giá
+  discountPrice: 180, // Giá sau giảm (nếu có)
+  isNew: true // Sản phẩm mới
+},
+  {
+    _id: "2",
+    name: "Áo Burberry Trench",
+    brand: "Burberry",
+    price: 300,
+    image: "https://picsum.photos/300/200?random=9",
+  },
+  {
+    _id: "3",
+    name: "Giày Gucci Ace",
+    brand: "Gucci",
+    price: 500,
+    image: "https://picsum.photos/300/200?random=10",
+  },
+  {
+    _id: "4",
+    name: "Túi Burberry Tote",
+    brand: "Burberry",
+    price: 450,
+    image: "https://picsum.photos/300/200?random=11",
+  },
+];
+
 const reviews = [
   {
-    name: 'Nguyễn Văn A',
+    name: "Nguyễn Văn A",
+    avatar: "https://picsum.photos/50/50?random=12",
     rating: 5,
-    comment: 'Sản phẩm chất lượng cao, giao hàng nhanh chóng!',
+    comment: "Sản phẩm chất lượng cao, giao hàng nhanh chóng!",
+    date: "18/08/2025 10:00 AM",
   },
   {
-    name: 'Trần Thị B',
+    name: "Trần Thị B",
+    avatar: "https://picsum.photos/50/50?random=13",
     rating: 4,
-    comment: 'Thiết kế đẹp, giá hợp lý, sẽ mua thêm.',
+    comment: "Thiết kế đẹp, giá hợp lý, sẽ mua thêm.",
+    date: "17/08/2025 03:30 PM",
   },
   {
-    name: 'Lê Văn C',
+    name: "Lê Văn C",
+    avatar: "https://picsum.photos/50/50?random=14",
     rating: 5,
-    comment: 'Dịch vụ chăm sóc khách hàng tuyệt vời.',
+    comment: "Dịch vụ chăm sóc khách hàng tuyệt vời.",
+    date: "16/08/2025 09:15 AM",
   },
 ];
 
@@ -81,18 +123,19 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await getProducts();
-        setProducts(response.data);
-      } catch (error) {
-        console.error('Lỗi lấy sản phẩm:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+  const fetchProducts = async () => {
+    try {
+      const response = await getProducts();
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Lỗi lấy sản phẩm:", error);
+      setProducts(dummyFeaturedProducts); // Dùng dữ liệu cứng
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchProducts();
+}, []);
 
   const heroSettings = {
     dots: true,
@@ -110,20 +153,28 @@ const Home = () => {
   if (loading) return <Loading />;
 
   // Featured products for grid (4 items)
-  const featuredProducts = products.slice(0, 4);
+  const featuredProducts = products.slice(0, 4) || dummyFeaturedProducts; // Sử dụng dummy nếu API rỗng
 
   return (
-    <div>
+    <div className="min-h-screen bg-luxuryWhite dark:bg-luxuryBlack transition-colors duration-300">
       {/* Hero Slider */}
       <section className="relative mb-12">
         <Slider {...heroSettings}>
           {heroSlides.map((slide, index) => (
             <div key={index} className="relative">
-              <img src={slide.image} alt={slide.title} className="w-full h-[600px] object-cover" />
-              <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-luxuryWhite bg-black bg-opacity-30 transition-opacity duration-300 hover:bg-opacity-40">
-                <h1 className="text-5xl font-elegant mb-4 animate-fadeIn">{slide.title}</h1>
-                <p className="text-2xl mb-8 animate-fadeIn delay-300">{slide.subtitle}</p>
-                <Button className="animate-fadeIn delay-500 bg-luxuryGold hover:bg-luxuryBlack text-luxuryBlack hover:text-luxuryWhite transition-all duration-300">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-[600px] object-cover"
+              />
+              <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-luxuryWhite bg-black bg-opacity-40 hover:bg-opacity-50 transition-opacity duration-500">
+                <h1 className="text-5xl font-elegant mb-4 animate-fadeIn text-shadow-lg">
+                  {slide.title}
+                </h1>
+                <p className="text-2xl mb-8 animate-fadeIn delay-300 text-shadow-md">
+                  {slide.subtitle}
+                </p>
+                <Button className="animate-fadeIn delay-500 bg-luxuryGold hover:bg-luxuryBlack text-luxuryBlack hover:text-luxuryWhite px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
                   <Link to={slide.link}>{slide.buttonText}</Link>
                 </Button>
               </div>
@@ -133,14 +184,23 @@ const Home = () => {
       </section>
 
       {/* Shop by Category */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-elegant text-luxuryBlack mb-6 text-center">Mua Theo Danh Mục</h2>
+      <section className="mb-12 px-4">
+        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+          Mua Theo Danh Mục
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category, index) => (
-            <div key={index} className="group relative">
-              <img src={category.image} alt={category.title} className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105" />
-              <div className="absolute inset-0 flex justify-center items-center bg-black bg-opacity-30 rounded-lg transition-opacity duration-300 group-hover:bg-opacity-50">
-                <Button className="bg-luxuryGold hover:bg-luxuryBlack text-luxuryBlack hover:text-luxuryWhite transition-all duration-300">
+            <div
+              key={index}
+              className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <img
+                src={category.image}
+                alt={category.title}
+                className="w-full h-56 object-cover transform transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-40 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button className="bg-luxuryGold hover:bg-luxuryBlack text-luxuryBlack hover:text-luxuryWhite px-6 py-2 rounded-full transition-all duration-300">
                   <Link to={category.link}>{category.title}</Link>
                 </Button>
               </div>
@@ -150,73 +210,117 @@ const Home = () => {
       </section>
 
       {/* Sản phẩm nổi bật - Carousel */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-elegant text-luxuryBlack mb-6 text-center">Sản Phẩm Nổi Bật</h2>
-        <ProductCarousel products={products.slice(0, 8)} /> {/* 8 sản phẩm cho carousel */}
+      <section className="mb-12 px-4">
+        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+          Sản Phẩm Nổi Bật
+        </h2>
+        <ProductCarousel products={products.slice(0, 8)} />
         <div className="text-center mt-8">
-          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack transition-all duration-300">
+          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
             <Link to="/products">Xem tất cả</Link>
           </Button>
         </div>
       </section>
 
       {/* Section thu hút người dùng - Featured Collection Grid + CTA */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-elegant text-luxuryBlack mb-6 text-center">Bộ Sưu Tập Đặc Biệt</h2>
+      <section className="mb-12 px-4">
+        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+          Bộ Sưu Tập Đặc Biệt
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
         </div>
         <div className="text-center mt-8">
-          <Button className="text-luxuryWhite bg-luxuryBlack hover:bg-luxuryGold hover:text-luxuryBlack transition-all duration-300">
+          <Button className="text-luxuryWhite bg-luxuryBlack hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
             <Link to="/products">Khám Phá Thêm</Link>
           </Button>
-          <p className="text-gray-600 mt-4">Hàng ngàn sản phẩm cao cấp chờ bạn khám phá!</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-4 text-center max-w-2xl mx-auto">
+            Hàng ngàn sản phẩm cao cấp từ các thương hiệu hàng đầu đang chờ bạn khám phá!
+          </p>
         </div>
       </section>
 
       {/* Giới thiệu về shop */}
-      <section className="mb-12 bg-luxuryWhite p-8 rounded-lg shadow-luxury">
-        <h2 className="text-3xl font-elegant text-luxuryBlack mb-6 text-center">Về Web Đồ Hiệu</h2>
-        <p className="text-gray-600 text-center mb-4">Web Đồ Hiệu là cửa hàng trực tuyến chuyên cung cấp các sản phẩm thời trang cao cấp từ các thương hiệu nổi tiếng như Gucci, Burberry. Chúng tôi cam kết mang đến chất lượng tốt nhất, giá cả cạnh tranh và dịch vụ giao hàng nhanh chóng.</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <img src="https://via.placeholder.com/300?text=Chất+Lượng+Cao" alt="Chất lượng cao" className="mx-auto h-32 rounded-full transition-transform duration-300 hover:scale-105" />
-            <h3 className="text-xl font-bold mt-4">Chất lượng cao</h3>
-            <p className="text-gray-500">Sản phẩm chính hãng 100%</p>
+      <section className="mb-12 px-4">
+        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+          Về Boy Đồ Hiệu
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 text-center">
+            <FaCheckCircle className="text-luxuryGold text-5xl mx-auto mb-4 transition-transform duration-300 hover:scale-110" />
+            <h3 className="text-xl font-bold text-luxuryBlack dark:text-luxuryWhite mt-4">
+              Chất lượng cao
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Sản phẩm chính hãng 100% từ các thương hiệu hàng đầu.
+            </p>
           </div>
-          <div className="text-center">
-            <img src="https://via.placeholder.com/300?text=Giá+Cạnh+Tranh" alt="Giá cạnh tranh" className="mx-auto h-32 rounded-full transition-transform duration-300 hover:scale-105" />
-            <h3 className="text-xl font-bold mt-4">Giá cạnh tranh</h3>
-            <p className="text-gray-500">Ưu đãi đặc biệt hàng tuần</p>
+          <div className="bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 text-center">
+            <FaDollarSign className="text-luxuryGold text-5xl mx-auto mb-4 transition-transform duration-300 hover:scale-110" />
+            <h3 className="text-xl font-bold text-luxuryBlack dark:text-luxuryWhite mt-4">
+              Giá cả hợp lý
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Ưu đãi đặc biệt và chương trình giảm giá thường xuyên.
+            </p>
           </div>
-          <div className="text-center">
-            <img src="https://via.placeholder.com/300?text=Giao+Hàng+Nhanh" alt="Giao hàng nhanh" className="mx-auto h-32 rounded-full transition-transform duration-300 hover:scale-105" />
-            <h3 className="text-xl font-bold mt-4">Giao hàng nhanh</h3>
-            <p className="text-gray-500">Giao hàng toàn quốc trong 3 ngày</p>
+          <div className="bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 text-center">
+            <FaShippingFast className="text-luxuryGold text-5xl mx-auto mb-4 transition-transform duration-300 hover:scale-110" />
+            <h3 className="text-xl font-bold text-luxuryBlack dark:text-luxuryWhite mt-4">
+              Giao hàng nhanh
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Giao hàng toàn quốc trong vòng 3-5 ngày làm việc.
+            </p>
           </div>
         </div>
+        <p className="text-gray-600 dark:text-gray-400 mt-6 text-center max-w-3xl mx-auto font-medium">
+          Boy Đồ Hiệu tự hào là điểm đến hàng đầu cho các sản phẩm thời trang cao cấp từ Gucci, Burberry và nhiều thương hiệu khác. Với sứ mệnh mang đến trải nghiệm mua sắm đẳng cấp, chúng tôi cam kết chất lượng, dịch vụ và sự hài lòng của khách hàng.
+        </p>
       </section>
 
       {/* Đánh giá khách hàng */}
-      <section className="mb-12">
-        <h2 className="text-3xl font-elegant text-luxuryBlack mb-6 text-center">Đánh Giá Từ Khách Hàng</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="mb-12 px-4">
+        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+          Đánh Giá Từ Khách Hàng
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {reviews.map((review, index) => (
-            <div key={index} className="p-6 bg-luxuryWhite rounded-lg shadow-luxury transition-all duration-300 hover:scale-105">
-              <div className="flex justify-center mb-4">
+            <div
+              key={index}
+              className="bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-hover-luxury transition-all duration-300 border border-luxuryGold/20"
+            >
+              <div className="flex items-center mb-4">
+                <img
+                  src={review.avatar}
+                  alt={review.name}
+                  className="w-16 h-16 rounded-full mr-4 object-cover border-2 border-luxuryGold transition-transform duration-300 hover:scale-110"
+                />
+                <div>
+                  <p className="font-bold text-luxuryBlack dark:text-luxuryWhite">
+                    {review.name}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {review.date}
+                  </p>
+                </div>
+              </div>
+              <div className="flex mb-2">
                 {[...Array(5)].map((_, starIndex) => (
-                  <FaStar key={starIndex} className={starIndex < review.rating ? "text-luxuryGold" : "text-gray-300"} />
+                  <FaStar
+                    key={starIndex}
+                    className={starIndex < review.rating ? "text-luxuryGold" : "text-gray-300"}
+                  />
                 ))}
               </div>
-              <p className="text-gray-600 mb-4">{review.comment}</p>
-              <p className="text-right font-bold">{review.name}</p>
+              <p className="text-gray-600 dark:text-gray-400">{review.comment}</p>
             </div>
           ))}
         </div>
         <div className="text-center mt-8">
-          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack transition-all duration-300">
+          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
             <Link to="/reviews">Xem thêm đánh giá</Link>
           </Button>
         </div>

@@ -9,10 +9,10 @@ const Footer = () => {
         <div className="sm:flex sm:items-center sm:justify-between">
           <a href="/" className="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse">
             <img
-              src="/src/assets/logo.png"
+              src="/logo.png"
               className="h-12 rounded-lg transition-all duration-300 hover:scale-105"
               alt="Web Đồ Hiệu Logo"
-              onError={(e) => { e.target.src = "https://via.placeholder.com/150"; }} // Fallback nếu logo không load
+              // Fallback nếu logo không load
             />
             <span className="self-center text-xl font-bold whitespace-nowrap text-gray-900 dark:text-luxuryWhite">
               Boy Đồ Hiệu
@@ -39,7 +39,7 @@ const Footer = () => {
         <hr className="my-6 border-gray-200 dark:border-gray-700 lg:my-8" />
         <div className="sm:flex sm:items-center sm:justify-between">
           <span className="block text-sm text-gray-500 sm:text-center dark:text-gray-400">
-            © 2025 <a href="/" className="hover:text-luxuryGold transition-colors duration-300">Boy Đồ Hiệu™</a>. Đã đăng ký bản quyền.
+            © 2025 <a href="/" className="hover:text-luxuryGold transition-colors duration-300">Boy Đồ Hiệu™</a>.
           </span>
           <div className="flex space-x-6 sm:mt-0 mt-4 justify-center">
             <a
