@@ -61,22 +61,26 @@ const categories = [
 
 const dummyFeaturedProducts = [
   {
-  _id: "1",
-  name: "Nón Gucci Classic",
-  brand: "Gucci",
-  price: 200,
-  image: "https://picsum.photos/300/200?random=8",
-  rating: 4.5, // Điểm đánh giá
-  numReviews: 120, // Số lượt đánh giá
-  discountPrice: 180, // Giá sau giảm (nếu có)
-  isNew: true // Sản phẩm mới
-},
+    _id: "1",
+    name: "Nón Gucci Classic",
+    brand: "Gucci",
+    price: 200,
+    image: "https://picsum.photos/300/200?random=8",
+    description: "Sản phẩm được tạo từ da cao cấp, thiết kế tinh tế, phù hợp cho mọi lứa tuổi và phong cách.",
+    rating: 4.5,
+    numReviews: 120,
+    discountPrice: 180,
+    isNew: true,
+  },
   {
     _id: "2",
     name: "Áo Burberry Trench",
     brand: "Burberry",
     price: 300,
     image: "https://picsum.photos/300/200?random=9",
+    description: "Áo khoác cao cấp với chất liệu cotton premium, chống nước và giữ ấm tốt.",
+    rating: 4.0,
+    numReviews: 50,
   },
   {
     _id: "3",
@@ -84,6 +88,10 @@ const dummyFeaturedProducts = [
     brand: "Gucci",
     price: 500,
     image: "https://picsum.photos/300/200?random=10",
+    description: "Giày sneaker da thật, thiết kế hiện đại, thoải mái cho hoạt động hàng ngày.",
+    rating: 4.8,
+    numReviews: 80,
+    discountPrice: 450,
   },
   {
     _id: "4",
@@ -91,6 +99,9 @@ const dummyFeaturedProducts = [
     brand: "Burberry",
     price: 450,
     image: "https://picsum.photos/300/200?random=11",
+    description: "Túi xách rộng rãi, chất liệu canvas bền bỉ, phù hợp cho công việc và du lịch.",
+    rating: 4.7,
+    numReviews: 90,
   },
 ];
 
@@ -210,17 +221,21 @@ const Home = () => {
       </section>
 
       {/* Sản phẩm nổi bật - Carousel */}
-      <section className="mb-12 px-4">
-        <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
-          Sản Phẩm Nổi Bật
-        </h2>
-        <ProductCarousel products={products.slice(0, 8)} />
-        <div className="text-center mt-8">
-          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
-            <Link to="/products">Xem tất cả</Link>
-          </Button>
-        </div>
-      </section>
+     <section className="mb-12 px-4">
+  <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
+    Sản Phẩm Nổi Bật
+  </h2>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    {featuredProducts.map((product) => (
+      <ProductCard key={product._id} product={product} />
+    ))}
+  </div>
+  <div className="text-center mt-8">
+    <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+      <Link to="/products">Xem tất cả</Link>
+    </Button>
+  </div>
+</section>
 
       {/* Section thu hút người dùng - Featured Collection Grid + CTA */}
       <section className="mb-12 px-4">
