@@ -81,7 +81,7 @@ const LoginForm = ({ onSubmit }) => {
           )}
         />
         <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
-          Chưa có tài khoản? <Link to="/register" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Đăng ký</Link>
+          Chưa có tài khoản? <Link to="/register" className="font-bold text-luxuryGold hover:underline dark:text-luxuryGold">Đăng ký</Link>
         </p>
       </form>
     </GoogleOAuthProvider>

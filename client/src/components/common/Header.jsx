@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -8,14 +8,14 @@ const Header = () => {
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Giả lập trạng thái đăng nhập
   const navigate = useNavigate();
+  const location = useLocation(); // Để kiểm tra trang hiện tại
 
   // Dummy data cho giỏ hàng
-  const cartItems = []; // Rỗng để test giỏ hàng trống, có thể thêm dữ liệu mẫu nếu cần
+  const cartItems = []; // Rỗng để test giỏ hàng trống
 
   useEffect(() => {
     // Kiểm tra trạng thái đăng nhập (giả lập, có thể thay bằng API sau)
     const checkAuth = () => {
-      // Logic kiểm tra token hoặc session, hiện tại giữ false
       setIsLoggedIn(false);
     };
     checkAuth();
@@ -56,17 +56,25 @@ const Header = () => {
 
             {/* Navigation - Desktop */}
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
-              {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => (
-                <li key={item} className="shrink-0">
-                  <Link
-                    to={item === "Trang chủ" ? "/" : `/${item.toLowerCase().replace(" ", "-")}`}
-                    title={item}
-                    className="flex text-sm font-bold text-gray-900 dark:text-luxuryWhite transition-colors duration-300 hover:text-luxuryGold rounded-md px-3 py-1 hover:bg-luxuryGold/10"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
+              {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
+              const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
+                const isActive = location.pathname === to;
+                return (
+                  <li key={item} className="shrink-0">
+                    <Link
+                      to={to}
+                      title={item}
+                      className={`flex text-sm font-bold transition-colors duration-300 ${
+                        isActive
+                          ? "text-luxuryGold"
+                          : "text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold"
+                      }`}
+                    >
+                      {item}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -276,16 +284,22 @@ const Header = () => {
           } bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 px-4 mt-4 transition-all duration-300`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
-            {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => (
-              <li key={item}>
-                <Link
-                  to={item === "Trang chủ" ? "/" : `/${item.toLowerCase().replace(" ", "-")}`}
-                  className="hover:text-luxuryGold transition-colors duration-300 px-2 py-1 rounded-md hover:bg-luxuryGold/20"
-                >
-                  {item}
-                </Link>
-              </li>
-            ))}
+            {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
+              const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
+              const isActive = location.pathname === to;
+              return (
+                <li key={item}>
+                  <Link
+                    to={to}
+                    className={`hover:text-luxuryGold transition-colors duration-300 px-2 py-1 rounded-md ${
+                      isActive ? "text-luxuryGold" : ""
+                    }`}
+                  >
+                    {item}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

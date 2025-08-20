@@ -25,7 +25,7 @@ const ForgotPasswordForm = ({ onSubmit }) => {
       </div>
       <Button type="submit" className="w-full">Gửi Yêu Cầu</Button>
       <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
-        Nhớ mật khẩu? <Link to="/login" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Đăng nhập</Link>
+        Nhớ mật khẩu? <Link to="/login" className="font-bold text-luxuryGold hover:underline dark:text-luxuryGold">Đăng nhập</Link>
       </p>
     </form>
   );

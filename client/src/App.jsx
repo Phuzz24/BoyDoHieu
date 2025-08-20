@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import BackToTop from './components/common/BackToTop';
+import Products from './pages/Product';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />

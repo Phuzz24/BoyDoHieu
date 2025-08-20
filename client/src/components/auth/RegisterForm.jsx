@@ -68,7 +68,7 @@ const RegisterForm = ({ onSubmit }) => {
       </div>
       <Button type="submit" className="w-full">Tạo Tài Khoản</Button>
       <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
-        Đã có tài khoản? <Link to="/login" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Đăng nhập</Link>
+        Đã có tài khoản? <Link to="/login" className="font-bold text-luxuryGold hover:underline dark:text-luxuryGold">Đăng nhập</Link>
       </p>
     </form>
   );
