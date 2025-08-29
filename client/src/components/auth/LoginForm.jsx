@@ -53,10 +53,11 @@ const LoginForm = ({ onSubmit }) => {
             required
           />
         </div>
-        <div className="flex items-start justify-between">
+       
+        <Button type="submit" className="w-full">Đăng nhập</Button>
+         <div className="flex items-start justify-between">
           <Link to="/forgot-password" className="text-sm font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Quên mật khẩu?</Link>
         </div>
-        <Button type="submit" className="w-full">Đăng nhập</Button>
         <div className="flex items-center my-4">
           <hr className="w-full border-gray-300 dark:border-gray-600" />
           <span className="px-2 text-gray-500 dark:text-gray-400">Hoặc</span>
@@ -69,11 +70,12 @@ const LoginForm = ({ onSubmit }) => {
           shape="rectangular"
           logo_alignment="left"
           width="full"
+          
           render={(renderProps) => (
             <button
               onClick={renderProps.onClick}
               disabled={renderProps.disabled}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 text-gray-900 dark:text-white rounded-full py-2.5 px-6 font-medium shadow-md hover:shadow-xl hover:from-luxuryGold hover:via-luxuryBlack hover:to-gray-800 hover:text-white transition-all duration-300 transform hover:scale-105 dark:hover:from-luxuryGold dark:hover:via-luxuryBlack dark:hover:to-gray-600"
+              className="w-full font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 dark:from-gray-800 dark:via-gray-700 dark:to-gray-600 text-gray-900 dark:text-white rounded-full py-2.5 px-6 shadow-md hover:shadow-xl hover:from-luxuryGold hover:via-luxuryBlack hover:to-gray-800 hover:text-white transition-all duration-300 transform hover:scale-105 dark:hover:from-luxuryGold dark:hover:via-luxuryBlack dark:hover:to-gray-600"
             >
               <FcGoogle className="w-6 h-6" />
               Đăng nhập bằng Google

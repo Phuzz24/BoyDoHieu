@@ -1,11 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { FaShoppingCart, FaHeart } from 'react-icons/fa';
 
 const ProductCard = ({ product }) => {
   return (
     <div className="bg-luxuryWhite dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl border border-gray-200 dark:border-gray-700">
-      {/* Ảnh sản phẩm */}
       <div className="relative h-64 overflow-hidden">
         <img
           src={product.image}
@@ -27,7 +25,6 @@ const ProductCard = ({ product }) => {
         </button>
       </div>
 
-      {/* Nội dung sản phẩm */}
       <div className="p-4">
         <h3 className="text-lg font-elegant text-luxuryBlack dark:text-luxuryWhite truncate hover:text-luxuryGold transition-colors duration-300">
           {product.name} - {product.brand}
@@ -46,13 +43,15 @@ const ProductCard = ({ product }) => {
           {product.description?.slice(0, 50) || 'Sản phẩm cao cấp, sang trọng'}...
         </p>
 
+        
+
         <div className="flex justify-between items-center mt-4">
           <button className="bg-luxuryGold text-luxuryBlack px-4 py-2 rounded-full font-bold hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 flex items-center gap-2 text-sm">
             <FaShoppingCart /> Thêm vào giỏ
           </button>
-          <Link to={`/san-pham/${product._id}`} className="text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300 text-sm">
+          <span className="text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300 text-sm">
             Xem chi tiết
-          </Link>
+          </span>
         </div>
       </div>
     </div>

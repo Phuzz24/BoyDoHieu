@@ -1,76 +1,101 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/product/ProductCard";
+import Loading from "../components/common/Loading";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
+  const [sizes, setSizes] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedSizes, setSelectedSizes] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity });
   const [sortBy, setSortBy] = useState("default");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const productsPerPage = 6;
 
   useEffect(() => {
-    // Dummy data for products (replace with API fetch later)
-    const dummyProducts = [
-      {
-        _id: 1,
-        name: "Áo sơ mi cao cấp",
-        brand: "Gucci",
-        image: "/images/product1.jpg",
-        price: 1500,
-        discountPrice: 1200,
-        description: "Áo sơ mi sang trọng từ Gucci",
-        category: "Áo",
-        isNew: true,
-      },
-      {
-        _id: 2,
-        name: "Túi xách da thật",
-        brand: "Louis Vuitton",
-        image: "/images/product2.jpg",
-        price: 2500,
-        description: "Túi xách cao cấp da thật",
-        category: "Túi xách",
-      },
-      {
-        _id: 3,
-        name: "Giày sneaker",
-        brand: "Nike",
-        image: "/images/product3.jpg",
-        price: 800,
-        discountPrice: 600,
-        description: "Giày sneaker thoải mái",
-        category: "Giày",
-      },
-      {
-        _id: 4,
-        name: "Đồng hồ Rolex",
-        brand: "Rolex",
-        image: "/images/product4.jpg",
-        price: 5000,
-        description: "Đồng hồ cao cấp Rolex",
-        category: "Phụ kiện",
-      },
-    ];
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const dummyProducts = [
+          {
+            _id: "1",
+            name: "Áo sơ mi cao cấp",
+            brand: "Gucci",
+            image: "/images/product1.jpg",
+            price: 1500,
+            discountPrice: 1200,
+            description: "Áo sơ mi sang trọng từ Gucci",
+            category: "Áo",
+            isNew: true,
+            sizes: ["S", "M", "L"],
+            colors: ["Black", "White"],
+            stock: 10,
+          },
+          {
+            _id: "2",
+            name: "Túi xách da thật",
+            brand: "Louis Vuitton",
+            image: "/images/product2.jpg",
+            price: 2500,
+            description: "Túi xách cao cấp da thật",
+            category: "Túi xách",
+            sizes: [],
+            colors: ["Brown"],
+            stock: 5,
+          },
+          {
+            _id: "3",
+            name: "Giày sneaker",
+            brand: "Nike",
+            image: "/images/product3.jpg",
+            price: 800,
+            discountPrice: 600,
+            description: "Giày sneaker thoải mái",
+            category: "Giày",
+            sizes: ["39", "40", "41"],
+            colors: ["White", "Black"],
+            stock: 15,
+          },
+          {
+            _id: "4",
+            name: "Đồng hồ Rolex",
+            brand: "Rolex",
+            image: "/images/product4.jpg",
+            price: 5000,
+            description: "Đồng hồ cao cấp Rolex",
+            category: "Phụ kiện",
+            sizes: [],
+            colors: ["Silver"],
+            stock: 3,
+          },
+        ];
 
-    setProducts(dummyProducts);
-    setFilteredProducts(dummyProducts);
-
-    // Extract unique categories and brands
-    const uniqueCategories = [...new Set(dummyProducts.map((p) => p.category))];
-    const uniqueBrands = [...new Set(dummyProducts.map((p) => p.brand))];
-    setCategories(uniqueCategories);
-    setBrands(uniqueBrands);
+        setProducts(dummyProducts);
+        setFilteredProducts(dummyProducts);
+        setCategories([...new Set(dummyProducts.map((p) => p.category))]);
+        setBrands([...new Set(dummyProducts.map((p) => p.brand))]);
+        setSizes([...new Set(dummyProducts.flatMap((p) => p.sizes))].filter(Boolean));
+      } catch (error) {
+        setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
+        console.error("Lỗi lấy sản phẩm:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
   }, []);
 
   useEffect(() => {
     let filtered = products;
 
-    // Search filter
     if (searchQuery) {
       filtered = filtered.filter((p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,23 +103,19 @@ const Products = () => {
         p.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
-    // Category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((p) => selectedCategories.includes(p.category));
     }
-
-    // Brand filter
     if (selectedBrands.length > 0) {
       filtered = filtered.filter((p) => selectedBrands.includes(p.brand));
     }
-
-    // Price filter
+    if (selectedSizes.length > 0) {
+      filtered = filtered.filter((p) => p.sizes.some((size) => selectedSizes.includes(size)));
+    }
     filtered = filtered.filter(
       (p) => (p.discountPrice || p.price) >= priceRange.min && (p.discountPrice || p.price) <= priceRange.max
     );
 
-    // Sorting
     if (sortBy === "price-asc") {
       filtered = [...filtered].sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
     } else if (sortBy === "price-desc") {
@@ -104,7 +125,8 @@ const Products = () => {
     }
 
     setFilteredProducts(filtered);
-  }, [selectedCategories, selectedBrands, priceRange, sortBy, searchQuery, products]);
+    setCurrentPage(1);
+  }, [selectedCategories, selectedBrands, selectedSizes, priceRange, sortBy, searchQuery, products]);
 
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) =>
@@ -118,100 +140,124 @@ const Products = () => {
     );
   };
 
+  const handleSizeChange = (size) => {
+    setSelectedSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
+
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setSelectedBrands([]);
+    setSelectedSizes([]);
+    setPriceRange({ min: 0, max: Infinity });
+    setSortBy("default");
+    setSearchQuery("");
+  };
+
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
+  if (error) return <p className="text-center text-red-500">{error}</p>;
+  if (loading) return <Loading />;
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-        <ol className="flex items-center space-x-2">
-          <li>
-            <Link to="/" className="hover:text-luxuryGold transition-colors duration-300">
-              Trang chủ
-            </Link>
-          </li>
-          <li className="flex items-center">
-            <span className="mx-2">/</span>
-            <span>Sản phẩm</span>
-          </li>
-        </ol>
+      <nav className="text-sm text-gray-500 mb-4">
+        <Link to="/" className="hover:text-luxuryGold">Trang chủ</Link> &gt; Sản phẩm
       </nav>
 
-      {/* Search Bar */}
-      <div className="mb-8">
+      <div className="mb-6">
         <input
           type="text"
-          placeholder="Tìm kiếm sản phẩm, thương hiệu..."
+          placeholder="Tìm kiếm sản phẩm, thương hiệu hoặc mô tả..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-1/2 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-luxuryWhite focus:ring-2 focus:ring-luxuryGold"
+          className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:border-luxuryGold transition-colors duration-300"
         />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Filter Sidebar */}
-        <aside className="lg:w-64 bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold mb-6 text-luxuryBlack dark:text-luxuryWhite">Bộ lọc tìm kiếm</h2>
+        <div className="w-full lg:w-1/4 bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md lg:sticky lg:top-4">
+          <h2 className="text-xl font-bold mb-4 text-luxuryBlack dark:text-luxuryWhite">Bộ lọc</h2>
 
-          {/* Categories */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Danh mục</h3>
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Danh mục</h3>
             {categories.map((category) => (
-              <label key={category} className="flex items-center mb-2">
+              <div key={category} className="flex items-center mb-2">
                 <input
                   type="checkbox"
+                  id={category}
                   checked={selectedCategories.includes(category)}
                   onChange={() => handleCategoryChange(category)}
-                  className="form-checkbox text-luxuryGold rounded focus:ring-luxuryGold"
+                  className="mr-2 accent-luxuryGold"
                 />
-                <span className="ml-2 text-gray-700 dark:text-gray-300">{category}</span>
-              </label>
+                <label htmlFor={category} className="text-gray-700 dark:text-gray-300">{category}</label>
+              </div>
             ))}
           </div>
 
-          {/* Brands */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Thương hiệu</h3>
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Thương hiệu</h3>
             {brands.map((brand) => (
-              <label key={brand} className="flex items-center mb-2">
+              <div key={brand} className="flex items-center mb-2">
                 <input
                   type="checkbox"
+                  id={brand}
                   checked={selectedBrands.includes(brand)}
                   onChange={() => handleBrandChange(brand)}
-                  className="form-checkbox text-luxuryGold rounded focus:ring-luxuryGold"
+                  className="mr-2 accent-luxuryGold"
                 />
-                <span className="ml-2 text-gray-700 dark:text-gray-300">{brand}</span>
-              </label>
+                <label htmlFor={brand} className="text-gray-700 dark:text-gray-300">{brand}</label>
+              </div>
             ))}
           </div>
 
-          {/* Price Range */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Khoảng giá ($)</h3>
-            <div className="flex items-center space-x-4">
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Kích thước</h3>
+            {sizes.map((size) => (
+              <div key={size} className="flex items-center mb-2">
+                <input
+                  type="checkbox"
+                  id={size}
+                  checked={selectedSizes.includes(size)}
+                  onChange={() => handleSizeChange(size)}
+                  className="mr-2 accent-luxuryGold"
+                />
+                <label htmlFor={size} className="text-gray-700 dark:text-gray-300">{size}</label>
+              </div>
+            ))}
+          </div>
+
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Khoảng giá</h3>
+            <div className="flex gap-2">
               <input
                 type="number"
-                placeholder="Min"
+                placeholder="Tối thiểu"
                 value={priceRange.min || ""}
                 onChange={(e) => setPriceRange({ ...priceRange, min: parseInt(e.target.value) || 0 })}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-luxuryWhite"
+                className="w-1/2 px-3 py-2 border rounded focus:outline-none focus:border-luxuryGold"
               />
-              <span>-</span>
               <input
                 type="number"
-                placeholder="Max"
-                value={priceRange.max === Infinity ? "" : priceRange.max}
+                placeholder="Tối đa"
+                value={priceRange.max !== Infinity ? priceRange.max : ""}
                 onChange={(e) => setPriceRange({ ...priceRange, max: parseInt(e.target.value) || Infinity })}
-                className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-luxuryWhite"
+                className="w-1/2 px-3 py-2 border rounded focus:outline-none focus:border-luxuryGold"
               />
             </div>
           </div>
 
-          {/* Sort By */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Sắp xếp theo</h3>
+          <div className="mb-6">
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Sắp xếp theo</h3>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-luxuryWhite"
+              className="w-full px-3 py-2 border rounded focus:outline-none focus:border-luxuryGold"
             >
               <option value="default">Mặc định</option>
               <option value="price-asc">Giá tăng dần</option>
@@ -219,24 +265,62 @@ const Products = () => {
               <option value="newest">Mới nhất</option>
             </select>
           </div>
-        </aside>
 
-        {/* Product Grid */}
+          <button
+            onClick={resetFilters}
+            className="w-full bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300"
+          >
+            Xóa bộ lọc
+          </button>
+        </div>
+
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.length === 0 ? (
+          {paginatedProducts.length === 0 ? (
             <p className="col-span-full text-center text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm</p>
           ) : (
-            filteredProducts.map((product) => <ProductCard key={product._id} product={product} />)
+            <>
+              <div className="col-span-full mb-4 text-gray-700 dark:text-gray-300">
+                Tìm thấy {filteredProducts.length} sản phẩm
+              </div>
+              {paginatedProducts.map((product) => (
+                <Link to={`/product/${product._id}`} key={product._id}>
+                  <ProductCard product={product} />
+                </Link>
+              ))}
+            </>
           )}
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center mt-8">
-        <button className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full mr-2 hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300">
+      <div className="flex justify-center mt-8 space-x-2">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full disabled:opacity-50 hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300"
+          aria-label="Trang trước"
+        >
           Trước
         </button>
-        <button className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300">
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => setCurrentPage(page)}
+            className={`px-4 py-2 rounded-full ${
+              currentPage === page
+                ? "bg-luxuryBlack text-luxuryWhite"
+                : "bg-luxuryGold text-luxuryBlack hover:bg-luxuryBlack hover:text-luxuryWhite"
+            } transition-all duration-300`}
+            aria-label={`Trang ${page}`}
+          >
+            {page}
+          </button>
+        ))}
+        <button
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full disabled:opacity-50 hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300"
+          aria-label="Trang sau"
+        >
           Sau
         </button>
       </div>

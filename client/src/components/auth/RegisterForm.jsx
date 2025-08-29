@@ -66,7 +66,7 @@ const RegisterForm = ({ onSubmit }) => {
           Tôi chấp nhận <a href="#" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Điều khoản và Điều kiện</a>
         </label>
       </div>
-      <Button type="submit" className="w-full">Tạo Tài Khoản</Button>
+      <Button type="submit" className="w-full">Tạo tài khoản</Button>
       <p className="text-sm font-light text-gray-500 dark:text-gray-400 text-center">
         Đã có tài khoản? <Link to="/login" className="font-bold text-luxuryGold hover:underline dark:text-luxuryGold">Đăng nhập</Link>
       </p>
