@@ -11,27 +11,29 @@ import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import BackToTop from './components/common/BackToTop';
 import Products from './pages/Product';
-
+import { CartProvider } from './context/CartContext.jsx'; // Thay .js bằng .jsx
 function App() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-        </Routes>
-        <BackToTop />
-      </main>
-      <Footer />
-    </div>
+    <CartProvider>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+          </Routes>
+          <BackToTop />
+        </main>
+        <Footer />
+      </div>
+    </CartProvider>
   );
 }
 

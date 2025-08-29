@@ -1,40 +1,57 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useCart } from '../../context/CartContext';
+import useAuth from '../../hooks/useAuth';
+import { toast } from 'react-toastify';
 
 const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isUserOpen, setIsUserOpen] = useState(false); // Chỉ mở khi click
+  const [isUserOpen, setIsUserOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Giả lập trạng thái đăng nhập
   const navigate = useNavigate();
-  const location = useLocation(); // Để kiểm tra trang hiện tại
-
-  // Dummy data cho giỏ hàng
-  const cartItems = []; // Rỗng để test giỏ hàng trống
+  const location = useLocation();
+  const { cart, removeFromCart } = useCart();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
-    // Kiểm tra trạng thái đăng nhập (giả lập, có thể thay bằng API sau)
-    const checkAuth = () => {
-      setIsLoggedIn(false);
-    };
-    checkAuth();
-  }, []);
+    console.log('Header cart updated:', cart);
+  }, [cart]);
+
+  useEffect(() => {
+    setIsCartOpen(false);
+    setIsUserOpen(false);
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const handleCartClick = () => {
-    setIsCartOpen(!isCartOpen); // Mở dropdown khi click
+    console.log('Toggling cart dropdown, current isCartOpen:', isCartOpen, 'cart:', cart);
+    setIsCartOpen(!isCartOpen);
+    setIsUserOpen(false);
   };
 
   const handleLoginClick = () => {
-    if (!isLoggedIn) {
-      navigate("/login"); // Chuyển đến trang đăng nhập khi chưa đăng nhập
-    } else {
-      setIsUserOpen(!isUserOpen); // Mở dropdown tài khoản khi đã đăng nhập
+    if (!user) navigate("/login");
+    else {
+      setIsUserOpen(!isUserOpen);
+      setIsCartOpen(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const handleRemoveFromCart = (id, name) => {
+    removeFromCart(id);
+    toast.success(`${name || 'Sản phẩm'} đã được xóa khỏi giỏ hàng!`);
+    if (isCartOpen) {
+      setIsCartOpen(false);
     }
   };
 
   return (
-    <nav className="bg-gradient-to-r from-luxuryWhite to-gray-100 dark:from-luxuryBlack dark:to-gray-900 shadow-lg transition-all duration-300 hover:shadow-xl">
+    <nav className="bg-gradient-to-r from-luxuryWhite to-gray-100 dark:from-luxuryBlack dark:to-gray-900 shadow-xl transition-all duration-300 hover:shadow-2xl">
       <div className="max-w-screen-xl px-4 mx-auto 2xl:px-0 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -48,16 +65,14 @@ const Header = () => {
                 />
                 <img
                   className="hidden w-auto h-14 dark:block transition-all duration-300 group-hover:scale-105 rounded-lg"
-                  src="/logo.png" // Thay bằng logo dark nếu có
+                  src="/logo.png"
                   alt="Web Đồ Hiệu Logo Dark"
                 />
               </Link>
             </div>
-
-            {/* Navigation - Desktop */}
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
               {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
-              const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
+                const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
                 const isActive = location.pathname === to;
                 return (
                   <li key={item} className="shrink-0">
@@ -65,9 +80,7 @@ const Header = () => {
                       to={to}
                       title={item}
                       className={`flex text-sm font-bold transition-colors duration-300 ${
-                        isActive
-                          ? "text-luxuryGold"
-                          : "text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold"
+                        isActive ? "text-luxuryGold" : "text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold"
                       }`}
                     >
                       {item}
@@ -85,7 +98,7 @@ const Header = () => {
                 id="myCartDropdownButton1"
                 data-dropdown-toggle="myCartDropdown1"
                 type="button"
-                className="inline-flex items-center rounded-full justify-center p-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
                 onClick={handleCartClick}
               >
                 <span className="sr-only">Giỏ hàng</span>
@@ -107,70 +120,147 @@ const Header = () => {
                   />
                 </svg>
                 <span className="hidden sm:flex">Giỏ hàng của tôi</span>
+                {cart.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-luxuryGold text-luxuryBlack text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse-once">
+                    {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                  </span>
+                )}
               </button>
 
               <div
                 id="myCartDropdown1"
-                className={`${
-                  isCartOpen ? "block" : "hidden"
-                } z-50 absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 transition-all duration-300 transform origin-top-right scale-100 opacity-100`}
+                className={`z-50 absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-6 transition-all duration-300 transform origin-top-right ${
+                  isCartOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 hidden'
+                }`}
               >
-                {cartItems.length === 0 ? (
-                  <div className="text-center">
-                    <p className="text-gray-500 dark:text-gray-400 font-medium mb-4">Giỏ hàng trống</p>
+                {cart.length === 0 ? (
+                  <div className="text-center space-y-4">
+                    <div className="flex justify-center">
+                      <svg
+                        className="w-16 h-16 text-gray-400 dark:text-gray-600"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8.5-3h9.25L19 7H7.312"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-400">Giỏ hàng của bạn đang trống</p>
                     <Link
-                      to="/"
-                      className="inline-flex items-center px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md"
+                      to="/products"
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-luxuryGold to-yellow-600 text-luxuryBlack rounded-lg hover:from-luxuryBlack hover:to-gray-800 hover:text-luxuryWhite transition-all duration-300 hover:shadow-xl transform hover:scale-105"
                     >
+                      <svg
+                        className="w-5 h-5 mr-2"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 12h14M12 5l7 7-7 7"
+                        />
+                      </svg>
                       Mua sắm ngay
                     </Link>
                   </div>
                 ) : (
                   <>
-                    {cartItems.map((item, index) => (
-                      <div key={index} className="grid grid-cols-2 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                        <div>
-                          <Link
-                            to="#"
-                            className="truncate text-sm font-semibold text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300"
-                          >
-                            {item.name || `Sản phẩm ${index + 1}`}
-                          </Link>
-                          <p className="mt-0.5 truncate text-sm font-normal text-gray-500 dark:text-gray-400">
-                            {item.price || "100,000 VNĐ"}
-                          </p>
-                        </div>
-                        <div className="flex items-center justify-end gap-2">
-                          <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                            Số lượng: {item.quantity || 1}
-                          </p>
-                          <button
-                            className="text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-600 transition-transform duration-300 hover:scale-110"
-                          >
-                            <span className="sr-only">Xóa</span>
-                            <svg
-                              className="h-4 w-4"
-                              aria-hidden="true"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
+                    <div className="max-h-64 overflow-y-auto space-y-4">
+                      {cart.map((item, index) => (
+                        <div
+                          key={`${item._id}-${item.selectedSize || 'no-size'}-${item.selectedColor || 'no-color'}-${index}`}
+                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 shadow-md"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={item.images[0] || '/placeholder.jpg'}
+                              alt={item.name || 'Sản phẩm'}
+                              className="w-16 h-16 object-cover rounded-md border border-gray-200 dark:border-gray-600"
+                            />
+                            <div>
+                              <Link
+                                to={`/product/${item._id}`}
+                                className="text-sm font-semibold text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300"
+                              >
+                                {item.name || 'Sản phẩm không tên'} - {item.brand || 'Không rõ thương hiệu'}
+                              </Link>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                ${(item.discountPrice || item.price || 0).toFixed(2)}
+                              </p>
+                              {item.selectedSize && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Size: {item.selectedSize}</p>
+                              )}
+                              {item.selectedColor && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Color: {item.selectedColor}</p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <p className="text-sm font-medium text-luxuryBlack dark:text-luxuryWhite">
+                              x{item.quantity || 1}
+                            </p>
+                            <button
+                              onClick={() => handleRemoveFromCart(item._id, item.name)}
+                              className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 transition-colors duration-300 hover:scale-110"
                             >
-                              <path
-                                fillRule="evenodd"
-                                d="M2 12a10 10 0 1 1 20 0 10 10 0 0 1-20 0Zm7.7-3.7a1 1 0 0 0-1.4 1.4l2.3 2.3-2.3 2.3a1 1 0 1 0 1.4 1.4l2.3-2.3 2.3 2.3a1 1 0 0 0 1.4-1.4L13.4 12l2.3-2.3a1 1 0 0 0-1.4-1.4L12 10.6 9.7 8.3Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
+                              <svg
+                                className="w-5 h-5"
+                                aria-hidden="true"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  stroke="currentColor"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    <Link
-                      to="/cart"
-                      className="mt-4 w-full inline-flex items-center justify-center px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md"
-                    >
-                      Xem giỏ hàng
-                    </Link>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-lg font-bold text-luxuryBlack dark:text-luxuryWhite">
+                        Tổng cộng: <span className="text-luxuryGold">${cart.reduce((sum, item) => sum + (item.discountPrice || item.price || 0) * (item.quantity || 1), 0).toFixed(2)}</span>
+                      </p>
+                      <Link
+                        to="/cart"
+                        className="w-full mt-4 inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-luxuryGold to-yellow-600 text-luxuryBlack rounded-lg hover:from-luxuryBlack hover:to-gray-800 hover:text-luxuryWhite transition-all duration-300 hover:shadow-xl transform hover:scale-105"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 12h14M12 5l7 7-7 7"
+                          />
+                        </svg>
+                        Xem giỏ hàng chi tiết
+                      </Link>
+                    </div>
                   </>
                 )}
               </div>
@@ -181,7 +271,7 @@ const Header = () => {
                 id="userDropdownButton1"
                 data-dropdown-toggle="userDropdown1"
                 type="button"
-                className="inline-flex items-center rounded-full justify-center p-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
                 onClick={handleLoginClick}
               >
                 <svg
@@ -199,21 +289,20 @@ const Header = () => {
                     d="M7 17v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3Zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                   />
                 </svg>
-                {isLoggedIn ? "Tài khoản" : "Đăng nhập"}
+                {user ? "Tài khoản" : "Đăng nhập"}
               </button>
-
               <div
                 id="userDropdown1"
                 className={`${
                   isUserOpen ? "block" : "hidden"
-                } z-50 absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-2 transition-all duration-300 transform origin-top-right scale-100 opacity-100`}
+                } z-50 absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-2 transition-all duration-300 transform origin-top-right ${isUserOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
               >
-                {isLoggedIn ? (
+                {user ? (
                   <ul className="text-start text-sm font-medium text-gray-900 dark:text-luxuryWhite">
                     <li>
                       <Link
                         to="/account"
-                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-600 transition-colors duration-300 hover:text-luxuryGold"
+                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
                       >
                         Tài khoản của tôi
                       </Link>
@@ -221,28 +310,28 @@ const Header = () => {
                     <li>
                       <Link
                         to="/orders"
-                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-600 transition-colors duration-300 hover:text-luxuryGold"
+                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
                       >
                         Đơn hàng của tôi
                       </Link>
                     </li>
                     <li>
-                      <Link
-                        to="/logout"
-                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-600 transition-colors duration-300 hover:text-luxuryGold"
+                      <button
+                        onClick={handleLogout}
+                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
                       >
                         Đăng xuất
-                      </Link>
+                      </button>
                     </li>
                   </ul>
                 ) : null}
               </div>
             </div>
 
-            {!isLoggedIn && (
+            {!user && (
               <Link
                 to="/register"
-                className="inline-flex items-center rounded-full justify-center p-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
               >
                 Đăng ký
               </Link>
@@ -253,7 +342,7 @@ const Header = () => {
               data-collapse-toggle="ecommerce-navbar-menu-1"
               aria-controls="ecommerce-navbar-menu-1"
               aria-expanded={isMobileMenuOpen}
-              className="inline-flex lg:hidden items-center justify-center hover:bg-luxuryGold/20 dark:hover:bg-gray-700 p-2 text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+              className="inline-flex lg:hidden items-center justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               <span className="sr-only">Mở menu</span>
@@ -281,7 +370,7 @@ const Header = () => {
           id="ecommerce-navbar-menu-1"
           className={`${
             isMobileMenuOpen ? "block" : "hidden"
-          } bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg py-3 px-4 mt-4 transition-all duration-300`}
+          } bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
             {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {

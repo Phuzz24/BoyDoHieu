@@ -170,7 +170,7 @@ const Products = () => {
         <Link to="/" className="hover:text-luxuryGold">Trang chủ</Link> &gt; Sản phẩm
       </nav>
 
-      <div className="mb-6">
+      <div className="mb-6 w-1/2">
         <input
           type="text"
           placeholder="Tìm kiếm sản phẩm, thương hiệu hoặc mô tả..."
