@@ -19,6 +19,7 @@ const Products = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const productsPerPage = 6;
+  const [showAllSizes, setShowAllSizes] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -35,7 +36,7 @@ const Products = () => {
             description: "Áo sơ mi sang trọng từ Gucci",
             category: "Áo",
             isNew: true,
-            sizes: ["S", "M", "L"],
+            sizes: ["S", "M", "L", "XL", "XXL", "3XL", "4XL"],
             colors: ["Black", "White"],
             stock: 10,
           },
@@ -60,21 +61,9 @@ const Products = () => {
             discountPrice: 600,
             description: "Giày sneaker thoải mái",
             category: "Giày",
-            sizes: ["39", "40", "41"],
+            sizes: ["39", "40", "41", "42", "43", "44", "45"],
             colors: ["White", "Black"],
             stock: 15,
-          },
-          {
-            _id: "4",
-            name: "Đồng hồ Rolex",
-            brand: "Rolex",
-            image: "/images/product4.jpg",
-            price: 5000,
-            description: "Đồng hồ cao cấp Rolex",
-            category: "Phụ kiện",
-            sizes: [],
-            colors: ["Silver"],
-            stock: 3,
           },
         ];
 
@@ -85,7 +74,6 @@ const Products = () => {
         setSizes([...new Set(dummyProducts.flatMap((p) => p.sizes))].filter(Boolean));
       } catch (error) {
         setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
-        console.error("Lỗi lấy sản phẩm:", error);
       } finally {
         setLoading(false);
       }
@@ -128,6 +116,12 @@ const Products = () => {
     setCurrentPage(1);
   }, [selectedCategories, selectedBrands, selectedSizes, priceRange, sortBy, searchQuery, products]);
 
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
   const handleCategoryChange = (category) => {
     setSelectedCategories((prev) =>
       prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
@@ -153,24 +147,21 @@ const Products = () => {
     setPriceRange({ min: 0, max: Infinity });
     setSortBy("default");
     setSearchQuery("");
+    setShowAllSizes(false);
   };
-
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * productsPerPage,
-    currentPage * productsPerPage
-  );
 
   if (error) return <p className="text-center text-red-500">{error}</p>;
   if (loading) return <Loading />;
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
         <Link to="/" className="hover:text-luxuryGold">Trang chủ</Link> &gt; Sản phẩm
       </nav>
 
-      <div className="mb-6 w-1/2">
+      {/* Search Bar */}
+      <div className="mb-6 w-full md:w-1/2">
         <input
           type="text"
           placeholder="Tìm kiếm sản phẩm, thương hiệu hoặc mô tả..."
@@ -181,9 +172,11 @@ const Products = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
+        {/* Filter Sidebar */}
         <div className="w-full lg:w-1/4 bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md lg:sticky lg:top-4">
           <h2 className="text-xl font-bold mb-4 text-luxuryBlack dark:text-luxuryWhite">Bộ lọc</h2>
 
+          {/* Category Filter */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Danh mục</h3>
             {categories.map((category) => (
@@ -200,6 +193,7 @@ const Products = () => {
             ))}
           </div>
 
+          {/* Brand Filter */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Thương hiệu</h3>
             {brands.map((brand) => (
@@ -216,28 +210,31 @@ const Products = () => {
             ))}
           </div>
 
-          
-
+          {/* Size Filter */}
           <div className="mb-6">
-            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Khoảng giá</h3>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Tối thiểu"
-                value={priceRange.min || ""}
-                onChange={(e) => setPriceRange({ ...priceRange, min: parseInt(e.target.value) || 0 })}
-                className="w-1/2 px-3 py-2 border rounded focus:outline-none focus:border-luxuryGold"
-              />
-              <input
-                type="number"
-                placeholder="Tối đa"
-                value={priceRange.max !== Infinity ? priceRange.max : ""}
-                onChange={(e) => setPriceRange({ ...priceRange, max: parseInt(e.target.value) || Infinity })}
-                className="w-1/2 px-3 py-2 border rounded focus:outline-none focus:border-luxuryGold"
-              />
-            </div>
+            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Kích thước</h3>
+            {(showAllSizes ? sizes : sizes.slice(0, 5)).map((size) => (
+              <div key={size} className="flex items-center mb-1">
+                <input
+                  type="checkbox"
+                  checked={selectedSizes.includes(size)}
+                  onChange={() => handleSizeChange(size)}
+                  className="mr-2 accent-luxuryGold"
+                />
+                <label className="text-gray-700 dark:text-gray-300">{size}</label>
+              </div>
+            ))}
+            {sizes.length > 5 && (
+              <button
+                onClick={() => setShowAllSizes(!showAllSizes)}
+                className="text-xs text-luxuryGold mt-2"
+              >
+                {showAllSizes ? "Thu gọn" : "Xem thêm..."}
+              </button>
+            )}
           </div>
 
+          {/* Sort */}
           <div className="mb-6">
             <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Sắp xếp theo</h3>
             <select
@@ -252,14 +249,16 @@ const Products = () => {
             </select>
           </div>
 
+          {/* Clear All */}
           <button
             onClick={resetFilters}
             className="w-full bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300"
           >
-            Xóa bộ lọc
+            Xóa tất cả bộ lọc
           </button>
         </div>
 
+        {/* Product Grid */}
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {paginatedProducts.length === 0 ? (
             <p className="col-span-full text-center text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm</p>
@@ -278,12 +277,12 @@ const Products = () => {
         </div>
       </div>
 
+      {/* Pagination */}
       <div className="flex justify-center mt-8 space-x-2">
         <button
           onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
           disabled={currentPage === 1}
           className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full disabled:opacity-50 hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300"
-          aria-label="Trang trước"
         >
           Trước
         </button>
@@ -296,7 +295,6 @@ const Products = () => {
                 ? "bg-luxuryBlack text-luxuryWhite"
                 : "bg-luxuryGold text-luxuryBlack hover:bg-luxuryBlack hover:text-luxuryWhite"
             } transition-all duration-300`}
-            aria-label={`Trang ${page}`}
           >
             {page}
           </button>
@@ -305,7 +303,6 @@ const Products = () => {
           onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
           disabled={currentPage === totalPages}
           className="px-4 py-2 bg-luxuryGold text-luxuryBlack rounded-full disabled:opacity-50 hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300"
-          aria-label="Trang sau"
         >
           Sau
         </button>

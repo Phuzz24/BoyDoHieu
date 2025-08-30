@@ -1,36 +1,63 @@
 import React from 'react';
 import { FaShoppingCart, FaHeart } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { handleAddToCartLogic } from '../../utils/cartUtils';
+import { useCart } from '../../context/CartContext';
 
 const ProductCard = ({ product }) => {
+  const { addToCart } = useCart();
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault(); // ✅ Ngăn chuyển trang nếu bấm trong thẻ Link cha
+    const convertedProduct = {
+      ...product,
+      images: product.images || [product.image] // ✅ xử lý fallback
+    };
+    handleAddToCartLogic(convertedProduct, product.sizes?.[0], product.colors?.[0], addToCart);
+    toast.success(`${product.name} đã được thêm vào giỏ hàng!`);
+  };
+
+  const discountPercent =
+    product.discountPrice &&
+    Math.round(((product.price - product.discountPrice) / product.price) * 100);
+
+  const isOutOfStock = product.stock === 0;
+
   return (
-    <div className="bg-luxuryWhite dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl border border-gray-200 dark:border-gray-700">
+    <div className="bg-luxuryWhite dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 dark:border-gray-700">
       <div className="relative h-64 overflow-hidden">
         <img
-          src={product.image}
+          src={product.image || product.images?.[0]}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
         />
+
         {product.isNew && (
-          <span className="absolute top-4 left-4 bg-luxuryGold text-luxuryBlack text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-            New
+          <span className="absolute top-3 left-3 bg-luxuryGold text-luxuryBlack text-xs font-semibold px-3 py-1 rounded-full shadow">
+            Mới
           </span>
         )}
-        {product.discountPrice && (
-          <span className="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-            -{Math.round(((product.price - product.discountPrice) / product.price) * 100)}%
+
+        {discountPercent > 0 && (
+          <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+            -{discountPercent}%
           </span>
         )}
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-luxuryGold transition-colors duration-300">
-          <FaHeart className="text-xl" />
+
+        <button className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-700/80 p-2 rounded-full text-gray-600 hover:text-red-500 transition-all duration-300">
+          <FaHeart className="text-lg" />
         </button>
       </div>
 
       <div className="p-4">
-        <h3 className="text-lg font-elegant text-luxuryBlack dark:text-luxuryWhite truncate hover:text-luxuryGold transition-colors duration-300">
-          {product.name} - {product.brand}
+        <h3 className="text-base font-medium text-gray-800 dark:text-white line-clamp-1">
+          {product.name}
         </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{product.brand}</p>
 
-        <div className="flex items-center gap-2 my-1">
+        <div className="flex items-center gap-2 mb-2">
           <p className="text-luxuryGold font-bold text-xl">
             ${product.discountPrice || product.price}
           </p>
@@ -39,19 +66,27 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 my-2">
-          {product.description?.slice(0, 50) || 'Sản phẩm cao cấp, sang trọng'}...
+        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2 mb-4">
+          {product.description?.slice(0, 80) || 'Sản phẩm cao cấp, sang trọng'}...
         </p>
 
-        
-
-        <div className="flex justify-between items-center mt-4">
-          <button className="bg-luxuryGold text-luxuryBlack px-4 py-2 rounded-full font-bold hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 flex items-center gap-2 text-sm">
-            <FaShoppingCart /> Thêm vào giỏ
-          </button>
-          <span className="text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300 text-sm">
+        <div className="flex justify-between items-center">
+          {isOutOfStock ? (
+            <span className="text-red-600 font-semibold text-sm">Hết hàng</span>
+          ) : (
+            <button
+              onClick={handleClick}
+              className="bg-luxuryGold text-luxuryBlack px-4 py-2 rounded-full font-bold hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 flex items-center gap-2 text-sm"
+            >
+              <FaShoppingCart /> Thêm vào giỏ
+            </button>
+          )}
+          <Link
+            to={`/product/${product._id}`}
+            className="text-sm text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300"
+          >
             Xem chi tiết
-          </span>
+          </Link>
         </div>
       </div>
     </div>

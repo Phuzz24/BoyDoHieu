@@ -5,6 +5,7 @@ import ProductDetailView from '../components/product/ProductDetailView';
 import { toast } from 'react-toastify';
 import useCart from '../hooks/useCart';
 
+
 const ProductDetail = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -27,8 +28,8 @@ const ProductDetail = () => {
               "https://media.gucci.com/style/DarkGray_Center_0_0_800x800/1691428510/440103_X3F05_1508_002_100_0000_Light-Oversize-washed-T-shirt-with-Gucci-logo.jpg",
               "https://media.gucci.com/style/DarkGray_Center_0_0_800x800/1691428515/440103_X3F05_1508_003_100_0000_Light-Oversize-washed-T-shirt-with-Gucci-logo.jpg"
             ],
-            price: 1500,
-            discountPrice: 1200,
+            price: 1500000,
+            discountPrice: 12000000,
             description: "Áo sơ mi sang trọng từ Gucci, chất liệu cao cấp, thiết kế tinh tế.",
             category: "Áo",
             isNew: true,
