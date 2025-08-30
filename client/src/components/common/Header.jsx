@@ -63,8 +63,8 @@ const Header = () => {
               </Link>
             </div>
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
-              {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
-                const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : item === "Liên hệ" ? "/contact" : `/${item.toLowerCase().replace(" ", "-")}`;
+              {["Trang chủ", "Sản phẩm", "Dịch vụ Spa", "Liên hệ"].map((item) => {
+                const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : item === "Liên hệ" ? "/contact" : item === "Dịch vụ Spa" ? "/spa" : `/${item.toLowerCase().replace(" ", "-")}`;
                 const isActive = location.pathname === to;
                 return (
                   <li key={item} className="shrink-0">
@@ -357,7 +357,7 @@ const Header = () => {
           className={`${isMobileMenuOpen ? "block" : "hidden"} bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
-            {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
+            {["Trang chủ", "Sản phẩm", "Dịch vụ Spa", "Liên hệ"].map((item) => {
               const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
               const isActive = location.pathname === to;
               return (

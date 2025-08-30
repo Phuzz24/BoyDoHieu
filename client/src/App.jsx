@@ -13,6 +13,7 @@ import BackToTop from './components/common/BackToTop';
 import Products from './pages/Product';
 import { CartProvider } from './context/CartContext.jsx'; // Thay .js bằng .jsx
 import Contact from './pages/Contact.jsx';
+import Spa from './pages/Spa.jsx';
 function App() {
   return (
     <CartProvider>
@@ -30,6 +31,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/spa" element={<Spa />} />
           </Routes>
           <BackToTop />
         </main>
