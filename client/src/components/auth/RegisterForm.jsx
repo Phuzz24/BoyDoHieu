@@ -63,7 +63,7 @@ const RegisterForm = ({ onSubmit }) => {
           required
         />
         <label htmlFor="terms" className="ml-3 text-sm font-light text-gray-500 dark:text-gray-300">
-          Tôi chấp nhận <a href="#" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Điều khoản và Điều kiện</a>
+          Tôi chấp nhận <a href="/terms" className="font-medium text-luxuryGold hover:underline dark:text-luxuryGold">Điều khoản và Điều kiện</a>
         </label>
       </div>
       <Button type="submit" className="w-full">Tạo tài khoản</Button>

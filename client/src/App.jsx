@@ -14,6 +14,7 @@ import Products from './pages/Product';
 import { CartProvider } from './context/CartContext.jsx'; // Thay .js bằng .jsx
 import Contact from './pages/Contact.jsx';
 import Spa from './pages/Spa.jsx';
+import TermsAndConditions from './pages/TermsAndConditions.jsx';
 function App() {
   return (
     <CartProvider>
@@ -32,6 +33,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/spa" element={<Spa />} />
+            <Route path="/terms" element={<TermsAndConditions />} />
           </Routes>
           <BackToTop />
         </main>
