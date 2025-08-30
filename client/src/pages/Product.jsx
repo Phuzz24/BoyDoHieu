@@ -216,21 +216,7 @@ const Products = () => {
             ))}
           </div>
 
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Kích thước</h3>
-            {sizes.map((size) => (
-              <div key={size} className="flex items-center mb-2">
-                <input
-                  type="checkbox"
-                  id={size}
-                  checked={selectedSizes.includes(size)}
-                  onChange={() => handleSizeChange(size)}
-                  className="mr-2 accent-luxuryGold"
-                />
-                <label htmlFor={size} className="text-gray-700 dark:text-gray-300">{size}</label>
-              </div>
-            ))}
-          </div>
+          
 
           <div className="mb-6">
             <h3 className="font-semibold mb-2 text-luxuryBlack dark:text-luxuryWhite">Khoảng giá</h3>

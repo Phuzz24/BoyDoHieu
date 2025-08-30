@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import BackToTop from './components/common/BackToTop';
 import Products from './pages/Product';
 import { CartProvider } from './context/CartContext.jsx'; // Thay .js bằng .jsx
+import Contact from './pages/Contact.jsx';
 function App() {
   return (
     <CartProvider>
@@ -28,6 +29,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/contact" element={<Contact />} />
           </Routes>
           <BackToTop />
         </main>

@@ -1,30 +1,103 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Link } from 'react-router-dom';
 
 const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
+  const handleIncrease = () => onUpdateQuantity(item._id, (item.quantity || 1) + 1);
+  const handleDecrease = () => {
+    if ((item.quantity || 1) > 1) onUpdateQuantity(item._id, (item.quantity || 1) - 1);
+  };
+
   return (
-    <div className="flex items-center border-b py-4 bg-luxuryWhite dark:bg-gray-800 rounded-lg shadow-sm transition-all duration-300 hover:shadow-md">
-      <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded-lg" />
-      <div className="flex-grow ml-4">
-        <h3 className="text-lg font-bold text-luxuryBlack dark:text-luxuryWhite">{item.name} - {item.brand}</h3>
-        <p className="text-gray-600 dark:text-gray-300">${item.price} x {item.quantity}</p>
-        {item.selectedSize && <p className="text-sm text-gray-500 dark:text-gray-400">Kích thước: {item.selectedSize}</p>}
-        {item.selectedColor && <p className="text-sm text-gray-500 dark:text-gray-400">Màu sắc: {item.selectedColor}</p>}
+    <div
+      className="flex items-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-luxuryGold/10 dark:border-luxuryBlack/10"
+    >
+      <img
+        src={item.images[0] || '/placeholder.jpg'}
+        alt={item.name || 'Sản phẩm'}
+        className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+      />
+      <div className="flex-1 ml-4">
+        <Link
+          to={`/product/${item._id}`}
+          className="text-lg font-semibold text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300"
+        >
+          {item.name || 'Sản phẩm không tên'} - {item.brand || 'Không rõ thương hiệu'}
+        </Link>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          ${(item.discountPrice || item.price || 0).toFixed(2)}
+        </p>
+        {item.selectedSize && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Size: {item.selectedSize}</p>
+        )}
+        {item.selectedColor && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Color: {item.selectedColor}</p>
+        )}
       </div>
       <div className="flex items-center space-x-4">
-        <input
-          type="number"
-          value={item.quantity}
-          onChange={(e) => onUpdateQuantity(item.id, e.target.value)}
-          className="w-16 border rounded-lg px-2 py-1 bg-luxuryWhite dark:bg-gray-700 dark:text-luxuryWhite focus:outline-none focus:border-luxuryGold transition-all duration-300"
-          min="1"
-        />
+        <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-2">
+          <button
+            onClick={handleDecrease}
+            className="text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300 hover:scale-110"
+          >
+            <svg
+              className="w-5 h-5"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 12h14"
+              />
+            </svg>
+          </button>
+          <span className="text-sm font-medium text-luxuryBlack dark:text-luxuryWhite">
+            {item.quantity || 1}
+          </span>
+          <button
+            onClick={handleIncrease}
+            className="text-luxuryBlack dark:text-luxuryWhite hover:text-luxuryGold transition-colors duration-300 hover:scale-110"
+          >
+            <svg
+              className="w-5 h-5"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 5v14M5 12h14"
+              />
+            </svg>
+          </button>
+        </div>
         <button
-          onClick={() => onRemove(item.id)}
-          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 transition-transform duration-300 hover:scale-110"
+          onClick={() => onRemove(item._id)}
+          className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 transition-colors duration-300 hover:scale-110"
         >
-          <FontAwesomeIcon icon={faTrash} />
+          <svg
+            className="w-6 h-6"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
         </button>
       </div>
     </div>

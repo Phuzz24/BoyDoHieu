@@ -58,29 +58,23 @@ const Header = () => {
           <div className="flex items-center space-x-8">
             <div className="shrink-0">
               <Link to="/" title="Web Đồ Hiệu" className="group">
-                <img
-                  className="block w-auto h-14 dark:hidden transition-all duration-300 group-hover:scale-105 rounded-lg"
-                  src="/logo.png"
-                  alt="Web Đồ Hiệu Logo"
-                />
-                <img
-                  className="hidden w-auto h-14 dark:block transition-all duration-300 group-hover:scale-105 rounded-lg"
-                  src="/logo.png"
-                  alt="Web Đồ Hiệu Logo Dark"
-                />
+                <img className="block w-auto h-14 dark:hidden transition-all duration-300 group-hover:scale-105 rounded-lg" src="/logo.png" alt="Web Đồ Hiệu Logo" />
+                <img className="hidden w-auto h-14 dark:block transition-all duration-300 group-hover:scale-105 rounded-lg" src="/logo.png" alt="Web Đồ Hiệu Logo Dark" />
               </Link>
             </div>
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
               {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
-                const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
+                const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : item === "Liên hệ" ? "/contact" : `/${item.toLowerCase().replace(" ", "-")}`;
                 const isActive = location.pathname === to;
                 return (
                   <li key={item} className="shrink-0">
                     <Link
                       to={to}
                       title={item}
-                      className={`flex text-sm font-bold transition-colors duration-300 ${
-                        isActive ? "text-luxuryGold" : "text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold"
+                      className={`flex text-sm font-bold px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
+                        isActive 
+                          ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
+                          : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
                       }`}
                     >
                       {item}
@@ -93,30 +87,24 @@ const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center lg:space-x-2">
-            <div className="relative">
+
+              {/* Giỏ hàng */}
+             <div className="relative">
               <button
-                id="myCartDropdownButton1"
-                data-dropdown-toggle="myCartDropdown1"
-                type="button"
-                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
                 onClick={handleCartClick}
+                type="button"
+                className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
+                  isCartOpen
+                    ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
+                    : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
+                }`}
               >
-                <span className="sr-only">Giỏ hàng</span>
-                <svg
-                  className="w-6 h-6 lg:me-1 transition-transform duration-300 hover:scale-110"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
-                    stroke="currentColor"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-8.5-3h9.25L19 7H7.312"
+                    d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4zm-8.5-3h9.25L19 7H7.312"
                   />
                 </svg>
                 <span className="hidden sm:flex">Giỏ hàng của tôi</span>
@@ -266,28 +254,18 @@ const Header = () => {
               </div>
             </div>
 
-            <div className="relative">
+             <div className="relative">
               <button
-                id="userDropdownButton1"
-                data-dropdown-toggle="userDropdown1"
-                type="button"
-                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
                 onClick={handleLoginClick}
+                type="button"
+                className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
+                  location.pathname === '/login' || isUserOpen
+                    ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
+                    : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
+                }`}
               >
-                <svg
-                  className="w-6 h-6 me-1 transition-transform duration-300 hover:scale-110"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    d="M7 17v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3Zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                  />
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeWidth="2" d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z" />
                 </svg>
                 {user ? "Tài khoản" : "Đăng nhập"}
               </button>
@@ -302,7 +280,9 @@ const Header = () => {
                     <li>
                       <Link
                         to="/account"
-                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
+                        className={`inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md ${
+                          location.pathname === '/account' ? 'bg-luxuryGold/20 text-luxuryGold' : ''
+                        }`}
                       >
                         Tài khoản của tôi
                       </Link>
@@ -310,7 +290,9 @@ const Header = () => {
                     <li>
                       <Link
                         to="/orders"
-                        className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
+                        className={`inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md ${
+                          location.pathname === '/orders' ? 'bg-luxuryGold/20 text-luxuryGold' : ''
+                        }`}
                       >
                         Đơn hàng của tôi
                       </Link>
@@ -328,14 +310,18 @@ const Header = () => {
               </div>
             </div>
 
-            {!user && (
-              <Link
-                to="/register"
-                className="inline-flex items-center rounded-full justify-center p-2 bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-sm font-bold leading-none text-gray-900 dark:text-luxuryWhite transition-all duration-300 hover:scale-110 hover:shadow-lg"
-              >
-                Đăng ký
-              </Link>
-            )}
+                  {!user && (
+                      <Link
+                        to="/register"
+                        className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
+                          location.pathname === '/register'
+                            ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
+                            : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
+                        }`}
+                      >
+                        Đăng ký
+                      </Link>
+                    )}
 
             <button
               type="button"
@@ -366,11 +352,9 @@ const Header = () => {
           </div>
         </div>
 
-        <div
-          id="ecommerce-navbar-menu-1"
-          className={`${
-            isMobileMenuOpen ? "block" : "hidden"
-          } bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+       {/* Mobile menu */}
+        <div id="ecommerce-navbar-menu-1"
+          className={`${isMobileMenuOpen ? "block" : "hidden"} bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
             {["Trang chủ", "Sản phẩm", "Về chúng tôi", "Liên hệ"].map((item) => {
@@ -380,8 +364,10 @@ const Header = () => {
                 <li key={item}>
                   <Link
                     to={to}
-                    className={`hover:text-luxuryGold transition-colors duration-300 px-2 py-1 rounded-md ${
-                      isActive ? "text-luxuryGold" : ""
+                    className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
+                      isActive
+                        ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
+                        : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
                     }`}
                   >
                     {item}

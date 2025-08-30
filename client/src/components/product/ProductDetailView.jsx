@@ -110,7 +110,7 @@ const ProductDetailView = ({ product, relatedProducts }) => {
         </div>
 
         {/* Thông tin sản phẩm */}
-        <div className="flex flex-col bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md">
+        <div className="flex flex-col bg-luxuryWhite dark:bg-gray-800 p-6 rounded-xl shadow-md w-3/4 h-[500px]">
           <h1 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-4">
             {product.name || 'Sản phẩm không tên'} - {product.brand || 'Không rõ thương hiệu'}
           </h1>
