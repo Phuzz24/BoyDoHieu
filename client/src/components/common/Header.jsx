@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from '../../context/CartContext';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext'; // Named import
 import { toast } from 'react-toastify';
 
 const Header = () => {
@@ -11,11 +11,12 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cart, removeFromCart } = useCart();
-  const { user, logout } = useAuth();
+const { user, logout } = useAuth() || { user: null, logout: () => {} }; // Sửa dòng 14
 
   useEffect(() => {
     console.log('Header cart updated:', cart);
-  }, [cart]);
+    console.log('Header user updated:', user);
+  }, [cart, user]);
 
   useEffect(() => {
     setIsCartOpen(false);
@@ -29,9 +30,10 @@ const Header = () => {
     setIsUserOpen(false);
   };
 
-  const handleLoginClick = () => {
-    if (!user) navigate("/login");
-    else {
+  const handleUserClick = () => {
+    if (!user) {
+      navigate("/login");
+    } else {
       setIsUserOpen(!isUserOpen);
       setIsCartOpen(false);
     }
@@ -39,15 +41,12 @@ const Header = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
-  };
-
-  const handleRemoveFromCart = (id, name) => {
-    removeFromCart(id);
-    toast.success(`${name || 'Sản phẩm'} đã được xóa khỏi giỏ hàng!`);
-    if (isCartOpen) {
-      setIsCartOpen(false);
-    }
+    toast.success('Đăng xuất thành công!', {
+      autoClose: 3000,
+    });
+    setTimeout(() => {
+      navigate("/login");
+    }, 3000);
   };
 
   return (
@@ -85,11 +84,10 @@ const Header = () => {
             </ul>
           </div>
 
-          {/* Actions */}
+          {/* Actions (Desktop) */}
           <div className="flex items-center lg:space-x-2">
-
-              {/* Giỏ hàng */}
-             <div className="relative">
+            {/* Giỏ hàng */}
+            <div className="relative">
               <button
                 onClick={handleCartClick}
                 type="button"
@@ -114,7 +112,6 @@ const Header = () => {
                   </span>
                 )}
               </button>
-
               <div
                 id="myCartDropdown1"
                 className={`z-50 absolute right-0 mt-2 w-96 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-6 transition-all duration-300 transform origin-top-right ${
@@ -200,7 +197,7 @@ const Header = () => {
                               x{item.quantity || 1}
                             </p>
                             <button
-                              onClick={() => handleRemoveFromCart(item._id, item.name)}
+                              onClick={() => removeFromCart(item._id, item.name)}
                               className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 transition-colors duration-300 hover:scale-110"
                             >
                               <svg
@@ -254,28 +251,37 @@ const Header = () => {
               </div>
             </div>
 
-             <div className="relative">
+            {/* Tài khoản/Avatar */}
+            <div className="relative hidden lg:block">
               <button
-                onClick={handleLoginClick}
+                onClick={handleUserClick}
                 type="button"
                 className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
-                  location.pathname === '/login' || isUserOpen
+                  isUserOpen
                     ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
                     : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
                 }`}
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeWidth="2" d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z" />
-                </svg>
-                {user ? "Tài khoản" : "Đăng nhập"}
-              </button>
-              <div
-                id="userDropdown1"
-                className={`${
-                  isUserOpen ? "block" : "hidden"
-                } z-50 absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-2 transition-all duration-300 transform origin-top-right ${isUserOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-              >
                 {user ? (
+                  <img
+                    src={user.avatar || '/default-avatar.png'}
+                    alt="Avatar"
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeWidth="2" d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z" />
+                  </svg>
+                )}
+                <span className="hidden sm:flex">{user ? user.username : 'Đăng nhập'}</span>
+              </button>
+              {user && (
+                <div
+                  id="userDropdown1"
+                  className={`z-50 absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-2 transition-all duration-300 transform origin-top-right ${
+                    isUserOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 hidden'
+                  }`}
+                >
                   <ul className="text-start text-sm font-medium text-gray-900 dark:text-luxuryWhite">
                     <li>
                       <Link
@@ -298,6 +304,16 @@ const Header = () => {
                       </Link>
                     </li>
                     <li>
+                      <Link
+                        to="/change-password"
+                        className={`inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md ${
+                          location.pathname === '/change-password' ? 'bg-luxuryGold/20 text-luxuryGold' : ''
+                        }`}
+                      >
+                        Đổi mật khẩu
+                      </Link>
+                    </li>
+                    <li>
                       <button
                         onClick={handleLogout}
                         className="inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md"
@@ -306,22 +322,22 @@ const Header = () => {
                       </button>
                     </li>
                   </ul>
-                ) : null}
-              </div>
+                </div>
+              )}
             </div>
 
-                  {!user && (
-                      <Link
-                        to="/register"
-                        className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
-                          location.pathname === '/register'
-                            ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
-                            : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
-                        }`}
-                      >
-                        Đăng ký
-                      </Link>
-                    )}
+            {!user && (
+              <Link
+                to="/register"
+                className={`hidden lg:inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
+                  location.pathname === '/register'
+                    ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
+                    : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
+                }`}
+              >
+                Đăng ký
+              </Link>
+            )}
 
             <button
               type="button"
@@ -352,13 +368,16 @@ const Header = () => {
           </div>
         </div>
 
-       {/* Mobile menu */}
-        <div id="ecommerce-navbar-menu-1"
-          className={`${isMobileMenuOpen ? "block" : "hidden"} bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        {/* Mobile menu */}
+        <div
+          id="ecommerce-navbar-menu-1"
+          className={`${isMobileMenuOpen ? 'block' : 'hidden'} bg-white dark:bg-gray-900 border border-luxuryGold/20 dark:border-luxuryBlack/20 rounded-xl py-3 px-4 mt-4 transition-all duration-300 transform ${
+            isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
             {["Trang chủ", "Sản phẩm", "Dịch vụ Spa", "Liên hệ"].map((item) => {
-              const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : `/${item.toLowerCase().replace(" ", "-")}`;
+              const to = item === "Trang chủ" ? "/" : item === "Sản phẩm" ? "/products" : item === "Liên hệ" ? "/contact" : item === "Dịch vụ Spa" ? "/spa" : `/${item.toLowerCase().replace(" ", "-")}`;
               const isActive = location.pathname === to;
               return (
                 <li key={item}>
@@ -375,6 +394,110 @@ const Header = () => {
                 </li>
               );
             })}
+            {/* Mobile Cart */}
+            <li>
+              <button
+                onClick={handleCartClick}
+                className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
+                  isCartOpen
+                    ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
+                    : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span>Giỏ hàng của tôi</span>
+                  {cart.length > 0 && (
+                    <span className="bg-luxuryGold text-luxuryBlack text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.reduce((sum, item) => sum + (item.quantity || 0), 0)}
+                    </span>
+                  )}
+                </div>
+              </button>
+            </li>
+            {/* Mobile User/Avatar */}
+            <li>
+              <button
+                onClick={handleUserClick}
+                className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
+                  isUserOpen
+                    ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
+                    : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {user ? (
+                      <img
+                        src={user.avatar || '/default-avatar.png'}
+                        alt="Avatar"
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeWidth="2" d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z" />
+                      </svg>
+                    )}
+                    <span>{user ? user.username : 'Đăng nhập'}</span>
+                  </div>
+                </div>
+              </button>
+              {user && (
+                <ul className={`pl-4 space-y-2 ${isUserOpen ? 'block' : 'hidden'}`}>
+                  <li>
+                    <Link
+                      to="/account"
+                      className={`block w-full px-3 py-2 rounded-md transition-all duration-300 ${
+                        location.pathname === '/account' ? 'text-luxuryGold bg-luxuryGold/10' : 'text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10'
+                      }`}
+                    >
+                      Tài khoản của tôi
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/orders"
+                      className={`block w-full px-3 py-2 rounded-md transition-all duration-300 ${
+                        location.pathname === '/orders' ? 'text-luxuryGold bg-luxuryGold/10' : 'text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10'
+                      }`}
+                    >
+                      Đơn hàng của tôi
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/change-password"
+                      className={`block w-full px-3 py-2 rounded-md transition-all duration-300 ${
+                        location.pathname === '/change-password' ? 'text-luxuryGold bg-luxuryGold/10' : 'text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10'
+                      }`}
+                    >
+                      Đổi mật khẩu
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-3 py-2 rounded-md transition-all duration-300 text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10"
+                    >
+                      Đăng xuất
+                    </button>
+                  </li>
+                </ul>
+              )}
+            </li>
+            {!user && (
+              <li>
+                <Link
+                  to="/register"
+                  className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
+                    location.pathname === '/register'
+                      ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
+                      : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                  }`}
+                >
+                  Đăng ký
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       </div>

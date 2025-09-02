@@ -5,11 +5,9 @@ import Button from '../common/Button';
 import { FaStar } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { useCart } from '../../context/CartContext';
-import useAuth from '../../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext'; // Sửa import
 import { FaShareAlt } from 'react-icons/fa';
 import { FaShoppingCart } from 'react-icons/fa';
-
-
 
 const ProductDetailView = ({ product, relatedProducts }) => {
   const [mainImage, setMainImage] = useState(product.images?.[0] || '');
@@ -182,32 +180,29 @@ const ProductDetailView = ({ product, relatedProducts }) => {
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Còn lại: {product.stock || 0} sản phẩm</p>
 
           <Button
-              onClick={handleAddToCartClick}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-luxuryGold to-yellow-500 text-luxuryBlack hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 w-[220px]"
-            >
-              <FaShoppingCart />
-              Thêm vào giỏ hàng
-            </Button>
-
-
+            onClick={handleAddToCartClick}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-luxuryGold to-yellow-500 text-luxuryBlack hover:bg-luxuryBlack hover:text-luxuryWhite transition-all duration-300 w-[220px]"
+          >
+            <FaShoppingCart />
+            Thêm vào giỏ hàng
+          </Button>
 
           {/* Nút chia sẻ */}
-         {navigator.share && (
-          <button
-            onClick={() =>
-              navigator.share({
-                title: product.name,
-                text: product.description,
-                url: window.location.href,
-              })
-            }
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-luxuryGold text-luxuryGold hover:bg-luxuryGold hover:text-white transition-all duration-300 w-[180px]"
-          >
-            <FaShareAlt />
-            Chia sẻ sản phẩm
-          </button>
-        )}
-
+          {navigator.share && (
+            <button
+              onClick={() =>
+                navigator.share({
+                  title: product.name,
+                  text: product.description,
+                  url: window.location.href,
+                })
+              }
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border border-luxuryGold text-luxuryGold hover:bg-luxuryGold hover:text-white transition-all duration-300 w-[180px]"
+            >
+              <FaShareAlt />
+              Chia sẻ sản phẩm
+            </button>
+          )}
         </div>
       </div>
 

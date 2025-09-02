@@ -1,16 +1,23 @@
 import React from 'react';
-import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
+import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { forgotPassword } from '../services/authService';
+import ResetPasswordForm from '../components/auth/ResetPasswordForm';
+import { resetPassword } from '../services/authService';
 
-const ForgotPassword = () => {
+const ResetPassword = () => {
+  const { token } = useParams();
+
   const handleSubmit = async (formData) => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Mật khẩu không khớp!');
+      return;
+    }
     try {
-      await forgotPassword({ username: formData.username });
-      toast.success('Yêu cầu reset mật khẩu đã gửi!');
+      await resetPassword({ password: formData.password, token });
+      toast.success('Đặt lại mật khẩu thành công!');
       window.location.href = '/login';
     } catch (error) {
-      toast.error('Yêu cầu thất bại!');
+      toast.error('Đặt lại mật khẩu thất bại!');
     }
   };
 
@@ -20,9 +27,9 @@ const ForgotPassword = () => {
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
           <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Quên Mật Khẩu
+              Đặt Lại Mật Khẩu
             </h1>
-            <ForgotPasswordForm onSubmit={handleSubmit} />
+            <ResetPasswordForm onSubmit={handleSubmit} />
           </div>
         </div>
       </div>
@@ -30,4 +37,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ResetPassword;

@@ -3,23 +3,28 @@ import { Link } from 'react-router-dom';
 import Button from '../common/Button';
 
 const ForgotPasswordForm = ({ onSubmit }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ email });
+    if (!username) {
+      alert('Vui lòng nhập tài khoản!');
+      return;
+    }
+    onSubmit({ username });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
       <div>
-        <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+        <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tài khoản</label>
         <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          id="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-luxuryGold focus:border-luxuryGold w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-luxuryGold"
-          placeholder="name@company.com"
+          placeholder="Tên tài khoản"
           required
         />
       </div>

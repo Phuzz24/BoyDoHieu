@@ -15,6 +15,7 @@ import { CartProvider } from './context/CartContext.jsx'; // Thay .js bằng .js
 import Contact from './pages/Contact.jsx';
 import Spa from './pages/Spa.jsx';
 import TermsAndConditions from './pages/TermsAndConditions.jsx';
+import ChangePassword from './pages/ChangePassword.jsx';
 function App() {
   return (
     <CartProvider>
@@ -34,6 +35,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/spa" element={<Spa />} />
             <Route path="/terms" element={<TermsAndConditions />} />
+            <Route path="/change-password" element={<ChangePassword />} />
           </Routes>
           <BackToTop />
         </main>

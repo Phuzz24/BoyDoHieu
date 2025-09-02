@@ -3,28 +3,34 @@ import { Link } from 'react-router-dom';
 import Button from '../common/Button';
 
 const RegisterForm = ({ onSubmit }) => {
-  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ username: '', password: '', confirmPassword: '' });
   const [termsAccepted, setTermsAccepted] = useState(false);
+
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!termsAccepted || formData.password !== formData.confirmPassword) return;
+    if (!termsAccepted || formData.password !== formData.confirmPassword) {
+      alert('Vui lòng chấp nhận điều khoản và đảm bảo mật khẩu khớp!');
+      return;
+    }
     onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
       <div>
-        <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
+        <label htmlFor="username" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Tài khoản</label>
         <input
-          type="email"
-          name="email"
-          id="email"
-          value={formData.email}
+          type="text"
+          name="username"
+          id="username"
+          value={formData.username}
           onChange={handleChange}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-luxuryGold focus:border-luxuryGold w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-luxuryGold"
-          placeholder="name@company.com"
+          placeholder="Tên tài khoản"
           required
+          autoComplete="username"
         />
       </div>
       <div>
@@ -38,19 +44,21 @@ const RegisterForm = ({ onSubmit }) => {
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-luxuryGold focus:border-luxuryGold w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-luxuryGold"
           placeholder="••••••••"
           required
+          autoComplete="new-password"
         />
       </div>
       <div>
-        <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Xác nhận mật khẩu</label>
+        <label htmlFor="confirmPassword" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Xác nhận mật khẩu</label>
         <input
           type="password"
-          name="confirm-password"
-          id="confirm-password"
+          name="confirmPassword"
+          id="confirmPassword"
           value={formData.confirmPassword}
           onChange={handleChange}
           className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-luxuryGold focus:border-luxuryGold w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-luxuryGold"
           placeholder="••••••••"
           required
+          autoComplete="new-password"
         />
       </div>
       <div className="flex items-start">
