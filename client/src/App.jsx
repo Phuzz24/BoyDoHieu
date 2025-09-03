@@ -16,6 +16,7 @@ import Contact from './pages/Contact.jsx';
 import Spa from './pages/Spa.jsx';
 import TermsAndConditions from './pages/TermsAndConditions.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
+import Favourites from './pages/Favourites.jsx';
 function App() {
   return (
     <CartProvider>
@@ -36,6 +37,7 @@ function App() {
             <Route path="/spa" element={<Spa />} />
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/favourites" element={<Favourites />} />
           </Routes>
           <BackToTop />
         </main>

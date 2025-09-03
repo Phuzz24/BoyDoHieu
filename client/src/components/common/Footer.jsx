@@ -25,12 +25,12 @@ const Footer = () => {
               </a>
             </li>
             <li>
-              <a href="/chinh-sach-bao-mat" className="hover:text-luxuryGold transition-colors duration-300 me-4 md:me-6">
+              <a href="/terms" className="hover:text-luxuryGold transition-colors duration-300 me-4 md:me-6">
                 Chính sách bảo mật
               </a>
             </li>
             <li>
-              <a href="/lien-he" className="hover:text-luxuryGold transition-colors duration-300">
+              <a href="/contact" className="hover:text-luxuryGold transition-colors duration-300">
                 Liên hệ
               </a>
             </li>

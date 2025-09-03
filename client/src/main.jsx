@@ -8,25 +8,28 @@ import 'slick-carousel/slick/slick-theme.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { FavoriteProvider } from './context/FavoriteContext.jsx'; // ✅ THÊM DÒNG NÀY
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-    <AuthProvider>
-      <App />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />   
+      <AuthProvider>
+        <FavoriteProvider> {/* ✅ BỌC ỨNG DỤNG BÊN TRONG PROVIDER NÀY */}
+          <App />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
+        </FavoriteProvider>
       </AuthProvider>
-      </BrowserRouter>
-  </StrictMode>,
+    </BrowserRouter>
+  </StrictMode>
 );

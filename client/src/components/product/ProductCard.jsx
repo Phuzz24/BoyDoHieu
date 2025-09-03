@@ -4,19 +4,32 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { handleAddToCartLogic } from '../../utils/cartUtils';
 import { useCart } from '../../context/CartContext';
+import { useFavorite } from '../../context/FavoriteContext';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorite();
+  const favorite = isFavorite(product._id);
 
   const handleClick = (e) => {
     e.stopPropagation();
-    e.preventDefault(); // ✅ Ngăn chuyển trang nếu bấm trong thẻ Link cha
+    e.preventDefault();
     const convertedProduct = {
       ...product,
-      images: product.images || [product.image] // ✅ xử lý fallback
+      images: product.images || [product.image],
     };
     handleAddToCartLogic(convertedProduct, product.sizes?.[0], product.colors?.[0], addToCart);
     toast.success(`${product.name} đã được thêm vào giỏ hàng!`);
+  };
+
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (favorite) {
+      removeFromFavorites(product._id);
+    } else {
+      addToFavorites(product);
+    }
   };
 
   const discountPercent =
@@ -46,8 +59,11 @@ const ProductCard = ({ product }) => {
           </span>
         )}
 
-        <button className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-700/80 p-2 rounded-full text-gray-600 hover:text-red-500 transition-all duration-300">
-          <FaHeart className="text-lg" />
+        <button
+          onClick={handleFavoriteClick}
+          className="absolute bottom-2 right-2 bg-white/80 dark:bg-gray-700/80 p-2 rounded-full text-gray-600 hover:text-red-500 transition-all duration-300"
+        >
+          <FaHeart className={`text-lg ${favorite ? 'text-red-500' : 'text-gray-600'}`} />
         </button>
       </div>
 
@@ -58,11 +74,14 @@ const ProductCard = ({ product }) => {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{product.brand}</p>
 
         <div className="flex items-center gap-2 mb-2">
-          <p className="text-luxuryGold font-bold text-xl">
-            ${product.discountPrice || product.price}
-          </p>
-          {product.discountPrice && (
-            <p className="text-gray-500 line-through text-sm">${product.price}</p>
+          <span className="text-lg font-semibold text-red-600 dark:text-red-400">
+            {(product.discountPrice || product.price || 0).toLocaleString('vi-VN')}₫
+          </span>
+
+          {product.discountPrice && product.price && (
+            <span className="text-sm line-through text-gray-400 dark:text-gray-500">
+              {product.price.toLocaleString('vi-VN')}₫
+            </span>
           )}
         </div>
 

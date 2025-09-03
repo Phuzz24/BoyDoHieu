@@ -1,4 +1,3 @@
-// src/context/CartContext.js
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
@@ -51,14 +50,27 @@ export function CartProvider({ children }) {
     });
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item._id !== id));
+  const removeFromCart = (id, selectedSize, selectedColor) => {
+    setCart((prev) =>
+      prev.filter(
+        (item) =>
+          !(
+            item._id === id &&
+            item.selectedSize === selectedSize &&
+            item.selectedColor === selectedColor
+          )
+      )
+    );
   };
 
-  const updateQuantity = (id, quantity) => {
+  const updateQuantity = (id, selectedSize, selectedColor, quantity) => {
     setCart((prev) =>
       prev.map((item) =>
-        item._id === id ? { ...item, quantity: Math.max(1, parseInt(quantity) || 1) } : item
+        item._id === id &&
+        item.selectedSize === selectedSize &&
+        item.selectedColor === selectedColor
+          ? { ...item, quantity: Math.max(1, parseInt(quantity) || 1) }
+          : item
       )
     );
   };

@@ -1,4 +1,6 @@
-import api from './api';
+import axios from 'axios';
 
-export const getProducts = () => api.get('/products');
-export const getProductById = (id) => api.get(`/products/${id}`);
+   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+   export const getProducts = () => axios.get(`${API_URL}/products`);
+   export const getProductById = (id) => axios.get(`${API_URL}/products/${id}`);

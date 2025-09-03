@@ -1,16 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
-  const handleIncrease = () => onUpdateQuantity(item._id, (item.quantity || 1) + 1);
+  const handleIncrease = () => onUpdateQuantity((item.quantity || 1) + 1);
   const handleDecrease = () => {
-    if ((item.quantity || 1) > 1) onUpdateQuantity(item._id, (item.quantity || 1) - 1);
+    if ((item.quantity || 1) > 1) onUpdateQuantity((item.quantity || 1) - 1);
+  };
+
+  const handleRemove = () => {
+    onRemove();
+    toast.success(`Đã xóa ${item.name} khỏi giỏ hàng!`, { autoClose: 3000 });
   };
 
   return (
-    <div
-      className="flex items-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-luxuryGold/10 dark:border-luxuryBlack/10"
-    >
+    <div className="flex items-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-luxuryGold/10 dark:border-luxuryBlack/10">
       <img
         src={item.images[0] || '/placeholder.jpg'}
         alt={item.name || 'Sản phẩm'}
@@ -24,7 +28,7 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
           {item.name || 'Sản phẩm không tên'} - {item.brand || 'Không rõ thương hiệu'}
         </Link>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          ${(item.discountPrice || item.price || 0).toFixed(2)}
+          {(item.discountPrice || item.price || 0).toLocaleString('vi-VN')}₫
         </p>
         {item.selectedSize && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Size: {item.selectedSize}</p>
@@ -80,7 +84,7 @@ const CartItem = ({ item, onRemove, onUpdateQuantity }) => {
           </button>
         </div>
         <button
-          onClick={() => onRemove(item._id)}
+          onClick={handleRemove}
           className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-600 transition-colors duration-300 hover:scale-110"
         >
           <svg

@@ -62,12 +62,12 @@ const Cart = () => {
         <h1 className="text-4xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">Giỏ hàng của bạn</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {cart.map((item) => (
+            {cart.map((item, index) => (
               <CartItem
-                key={item._id}
+                key={`${item._id}-${item.selectedSize || 'no-size'}-${item.selectedColor || 'no-color'}-${index}`}
                 item={item}
-                onRemove={removeFromCart}
-                onUpdateQuantity={updateQuantity}
+                onRemove={() => removeFromCart(item._id, item.selectedSize, item.selectedColor)}
+                onUpdateQuantity={(quantity) => updateQuantity(item._id, item.selectedSize, item.selectedColor, quantity)}
               />
             ))}
           </div>

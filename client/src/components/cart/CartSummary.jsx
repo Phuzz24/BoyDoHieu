@@ -8,7 +8,7 @@ const CartSummary = ({ total }) => {
       <div className="space-y-4">
         <div className="flex justify-between text-gray-600 dark:text-gray-400">
           <span>Tổng phụ</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{total.toLocaleString('vi-VN')}₫</span>
         </div>
         <div className="flex justify-between text-gray-600 dark:text-gray-400">
           <span>Phí vận chuyển</span>
@@ -16,7 +16,7 @@ const CartSummary = ({ total }) => {
         </div>
         <div className="flex justify-between text-lg font-semibold text-luxuryBlack dark:text-luxuryWhite border-t border-gray-200 dark:border-gray-700 pt-4">
           <span>Tổng cộng</span>
-          <span className="text-luxuryGold">${total.toFixed(2)}</span>
+          <span className="text-luxuryGold">{total.toLocaleString('vi-VN')}₫</span>
         </div>
       </div>
       <Link
