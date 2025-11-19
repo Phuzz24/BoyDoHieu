@@ -1,11 +1,12 @@
 // src/services/api.js (Cập nhật với interceptor để tự động thêm token)
 import axios from 'axios';
 
-// Dùng env var cho baseURL: Local dùng proxy '/api', production dùng Render URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+// Dùng env var cho baseURL: Local dùng '/api' (proxy Vite), Prod dùng full Render URL
+const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL,
+  timeout: 10000,  // Optional: 10s timeout cho API chậm (BE sleep)
 });
 
 // Interceptor request: Thêm token từ localStorage
@@ -28,7 +29,15 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.setItem('cart', JSON.stringify([]));
+      // Nếu dùng React Router: import { useNavigate } from 'react-router-dom'; rồi navigate('/login');
+      // Còn không: Giữ window.location.href
       window.location.href = '/login'; // Redirect login
+    }
+    // Optional: Log error chi tiết cho debug
+    if (error.response) {
+      console.error('API Error:', error.response.status, error.response.data);
+    } else {
+      console.error('API Error:', error.message);
     }
     return Promise.reject(error);
   }
