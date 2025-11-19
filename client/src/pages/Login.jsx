@@ -1,4 +1,4 @@
-// src/pages/Login.jsx (Cập nhật để sử dụng setUser từ context)
+// src/pages/Login.jsx (Cập nhật)
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '../components/auth/LoginForm';
@@ -8,23 +8,28 @@ import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser } = useAuth(); // setUser thực chất là updateAuth
 
   const handleSubmit = async (formData) => {
-    try {
-      const response = await loginUser({ username: formData.username, password: formData.password });
-      toast.success(response.message || 'Đăng nhập thành công!', {
-        autoClose: 3000,
-      });
-      setUser(response.user); // Cập nhật user ngay lập tức
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại!');
-      console.error('Login error:', error);
-    }
-  };
+  try {
+    const response = await loginUser({ username: formData.username, password: formData.password });
+    toast.success(response.message || 'Đăng nhập thành công!', { autoClose: 3000 });
+    setUser(response.token, response.user); // Gọi updateAuth
+
+    // Debug log
+    console.log('[LOGIN] User role:', response.user.role);
+
+    // Chuyển hướng dựa trên role
+    const redirectPath = response.user.role === 'admin' ? '/admin' : '/';
+    console.log('[LOGIN] Redirect to:', redirectPath);
+    setTimeout(() => {
+      navigate(redirectPath, { replace: true });
+    }, 1000);
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Đăng nhập thất bại!');
+    console.error('Login error:', error);
+  }
+};
 
   return (
     <section className="bg-gray-50 dark:bg-gray-900">

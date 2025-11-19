@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -32,7 +32,7 @@ const Header = () => {
 
   const handleUserClick = () => {
     if (!user) {
-      navigate("/login");
+      navigate('/login');
     } else {
       setIsUserOpen(!isUserOpen);
       setIsCartOpen(false);
@@ -43,11 +43,12 @@ const Header = () => {
     logout();
     toast.success('Đăng xuất thành công!', { autoClose: 3000 });
     setTimeout(() => {
-      navigate("/login");
+      navigate('/login');
     }, 3000);
   };
 
   const handleRemoveFromCart = (item) => {
+    console.log('Removing item:', item);
     removeFromCart(item._id, item.selectedSize, item.selectedColor);
     toast.success(`Đã xóa ${item.name} khỏi giỏ hàng!`, { autoClose: 3000 });
   };
@@ -73,17 +74,17 @@ const Header = () => {
               </Link>
             </div>
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
-              {["Trang chủ", "Sản phẩm", "Dịch vụ Spa", "Liên hệ"].map((item) => {
+              {['Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
                 const to =
-                  item === "Trang chủ"
-                    ? "/"
-                    : item === "Sản phẩm"
-                    ? "/products"
-                    : item === "Liên hệ"
-                    ? "/contact"
-                    : item === "Dịch vụ Spa"
-                    ? "/spa"
-                    : `/${item.toLowerCase().replace(" ", "-")}`;
+                  item === 'Trang chủ'
+                    ? '/'
+                    : item === 'Sản phẩm'
+                    ? '/products'
+                    : item === 'Liên hệ'
+                    ? '/contact'
+                    : item === 'Dịch vụ Spa'
+                    ? '/spa'
+                    : `/${item.toLowerCase().replace(' ', '-')}`;
                 const isActive = location.pathname === to;
                 return (
                   <li key={item} className="shrink-0">
@@ -92,8 +93,8 @@ const Header = () => {
                       title={item}
                       className={`flex text-sm font-bold px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
                         isActive
-                          ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
-                          : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                          ? 'text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10'
+                          : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105'
                       }`}
                     >
                       {item}
@@ -318,12 +319,12 @@ const Header = () => {
                     </li>
                     <li>
                       <Link
-                        to="/orders"
+                        to="/order-history"
                         className={`inline-flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-luxuryGold/20 dark:hover:bg-gray-700 transition-colors duration-300 hover:text-luxuryGold hover:shadow-md ${
-                          location.pathname === '/orders' ? 'bg-luxuryGold/20 text-luxuryGold' : ''
+                          location.pathname === '/order-history' ? 'bg-luxuryGold/20 text-luxuryGold' : ''
                         }`}
                       >
-                        Đơn hàng của tôi
+                        Đơn hàng của bạn
                       </Link>
                     </li>
                     <li>
@@ -411,17 +412,17 @@ const Header = () => {
           }`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
-            {["Trang chủ", "Sản phẩm", "Dịch vụ Spa", "Liên hệ"].map((item) => {
+            {['Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
               const to =
-                item === "Trang chủ"
-                  ? "/"
-                  : item === "Sản phẩm"
-                  ? "/products"
-                  : item === "Liên hệ"
-                  ? "/contact"
-                  : item === "Dịch vụ Spa"
-                  ? "/spa"
-                  : `/${item.toLowerCase().replace(" ", "-")}`;
+                item === 'Trang chủ'
+                  ? '/'
+                  : item === 'Sản phẩm'
+                  ? '/products'
+                  : item === 'Liên hệ'
+                  ? '/contact'
+                  : item === 'Dịch vụ Spa'
+                  ? '/spa'
+                  : `/${item.toLowerCase().replace(' ', '-')}`;
               const isActive = location.pathname === to;
               return (
                 <li key={item}>
@@ -429,8 +430,8 @@ const Header = () => {
                     to={to}
                     className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
                       isActive
-                        ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
-                        : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                        ? 'text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10'
+                        : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105'
                     }`}
                   >
                     {item}
@@ -444,8 +445,8 @@ const Header = () => {
                 onClick={handleCartClick}
                 className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
                   isCartOpen
-                    ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
-                    : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                    ? 'text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10'
+                    : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -464,8 +465,8 @@ const Header = () => {
                 onClick={handleUserClick}
                 className={`block w-full px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
                   isUserOpen
-                    ? "text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10"
-                    : "border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105"
+                    ? 'text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10'
+                    : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105'
                 }`}
               >
                 <div className="flex items-center justify-between">
@@ -504,14 +505,14 @@ const Header = () => {
                   </li>
                   <li>
                     <Link
-                      to="/orders"
+                      to="/order-history"
                       className={`block w-full px-3 py-2 rounded-md transition-all duration-300 ${
-                        location.pathname === '/orders'
+                        location.pathname === '/order-history'
                           ? 'text-luxuryGold bg-luxuryGold/10'
                           : 'text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10'
                       }`}
                     >
-                      Đơn hàng của tôi
+                      Đơn hàng của bạn
                     </Link>
                   </li>
                   <li>
@@ -523,7 +524,7 @@ const Header = () => {
                           : 'text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:bg-luxuryGold/10'
                       }`}
                     >
-                      Đơn hàng của tôi
+                      Yêu thích
                     </Link>
                   </li>
                   <li>

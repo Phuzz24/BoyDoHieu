@@ -217,13 +217,11 @@ const Products = () => {
             <p className="col-span-full text-center text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm</p>
           ) : (
             <>
-              <div className="col-span-full mb-4 text-gray-700 dark:text-gray-300">
+             <div className="col-span-full mb-4 text-gray-700 dark:text-gray-300">
                 Tìm thấy {filteredProducts.length} sản phẩm
               </div>
               {paginatedProducts.map((product) => (
-                <Link to={`/product/${product._id}`} key={product._id}>
-                  <ProductCard product={product} />
-                </Link>
+                <ProductCard key={product._id} product={product} />  // Xóa <Link> outer
               ))}
             </>
           )}

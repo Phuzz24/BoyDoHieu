@@ -8,7 +8,7 @@ import { getProducts } from "../services/productService";
 import { Link } from "react-router-dom";
 import { FaStar, FaCheckCircle, FaDollarSign, FaShippingFast } from "react-icons/fa";
 
-// Dummy hero slides
+// Hero slides (giữ nguyên)
 const heroSlides = [
   {
     image: "https://ecommerce-uikit.netlify.app/images/banners/main-fashion.png",
@@ -35,7 +35,7 @@ const heroSlides = [
   },
 ];
 
-// Dummy categories
+// Categories (giữ nguyên)
 const categories = [
   {
     title: "Nón",
@@ -59,52 +59,7 @@ const categories = [
   },
 ];
 
-const dummyFeaturedProducts = [
-  {
-    _id: "1",
-    name: "Nón Gucci Classic",
-    brand: "Gucci",
-    price: 200,
-    image: "https://picsum.photos/300/200?random=8",
-    description: "Sản phẩm được tạo từ da cao cấp, thiết kế tinh tế, phù hợp cho mọi lứa tuổi và phong cách.",
-    rating: 4.5,
-    numReviews: 120,
-    discountPrice: 180,
-    isNew: true,
-  },
-  {
-    _id: "2",
-    name: "Áo Burberry Trench",
-    brand: "Burberry",
-    price: 300,
-    image: "https://picsum.photos/300/200?random=9",
-    description: "Áo khoác cao cấp với chất liệu cotton premium, chống nước và giữ ấm tốt.",
-    rating: 4.0,
-    numReviews: 50,
-  },
-  {
-    _id: "3",
-    name: "Giày Gucci Ace",
-    brand: "Gucci",
-    price: 500,
-    image: "https://picsum.photos/300/200?random=10",
-    description: "Giày sneaker da thật, thiết kế hiện đại, thoải mái cho hoạt động hàng ngày.",
-    rating: 4.8,
-    numReviews: 80,
-    discountPrice: 450,
-  },
-  {
-    _id: "4",
-    name: "Túi Burberry Tote",
-    brand: "Burberry",
-    price: 450,
-    image: "https://picsum.photos/300/200?random=11",
-    description: "Túi xách rộng rãi, chất liệu canvas bền bỉ, phù hợp cho công việc và du lịch.",
-    rating: 4.7,
-    numReviews: 90,
-  },
-];
-
+// Reviews (giữ nguyên)
 const reviews = [
   {
     name: "Nguyễn Văn A",
@@ -134,19 +89,18 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  const fetchProducts = async () => {
-    try {
-      const response = await getProducts();
-      setProducts(response.data);
-    } catch (error) {
-      console.error("Lỗi lấy sản phẩm:", error);
-      setProducts(dummyFeaturedProducts); // Dùng dữ liệu cứng
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchProducts();
-}, []);
+    const fetchProducts = async () => {
+      try {
+        const response = await getProducts();
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Lỗi lấy sản phẩm:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const heroSettings = {
     dots: true,
@@ -162,9 +116,6 @@ const Home = () => {
   };
 
   if (loading) return <Loading />;
-
-  // Featured products for grid (4 items)
-  const featuredProducts = products.slice(0, 4) || dummyFeaturedProducts; // Sử dụng dummy nếu API rỗng
 
   return (
     <div className="min-h-screen bg-luxuryWhite dark:bg-luxuryBlack transition-colors duration-300">
@@ -220,40 +171,16 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Sản phẩm nổi bật - Carousel */}
-     <section className="mb-12 px-4">
-  <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
-    Sản Phẩm Nổi Bật
-  </h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-    {featuredProducts.map((product) => (
-      <ProductCard key={product._id} product={product} />
-    ))}
-  </div>
-  <div className="text-center mt-8">
-    <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
-      <Link to="/products">Xem tất cả</Link>
-    </Button>
-  </div>
-</section>
-
-      {/* Section thu hút người dùng - Featured Collection Grid + CTA */}
+      {/* Sản phẩm nổi bật - Chuyển thành Carousel để dynamic */}
       <section className="mb-12 px-4">
         <h2 className="text-3xl font-elegant text-luxuryBlack dark:text-luxuryWhite mb-8 text-center">
-          Bộ Sưu Tập Đặc Biệt
+          Sản Phẩm Nổi Bật
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
-        </div>
+        <ProductCarousel products={products} />
         <div className="text-center mt-8">
-          <Button className="text-luxuryWhite bg-luxuryBlack hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
-            <Link to="/products">Khám Phá Thêm</Link>
+          <Button className="bg-luxuryBlack text-luxuryWhite hover:bg-luxuryGold hover:text-luxuryBlack px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+            <Link to="/products">Xem tất cả</Link>
           </Button>
-          <p className="text-gray-600 dark:text-gray-400 mt-4 text-center max-w-2xl mx-auto">
-            Hàng ngàn sản phẩm cao cấp từ các thương hiệu hàng đầu đang chờ bạn khám phá!
-          </p>
         </div>
       </section>
 
@@ -292,7 +219,7 @@ const Home = () => {
           </div>
         </div>
         <p className="text-gray-600 dark:text-gray-400 mt-6 text-center max-w-3xl mx-auto font-medium">
-          Boy Đồ Hiệu tự hào là điểm đến hàng đầu cho các sản phẩm thời trang cao cấp từ Gucci, Burberry và nhiều thương hiệu khác. Với sứ mệnh mang đến trải nghiệm mua sắm đẳng cấp, chúng tôi cam kết chất lượng, dịch vụ và sự hài lòng của khách hàng.
+          Boy Đồ Hiệu tự hào là điểm đến hàng đầu cho các các sản phẩm thời trang cao cấp từ Gucci, Burberry và nhiều thương hiệu khác. Với sứ mệnh mang đến trải nghiệm mua sắm đẳng cấp, chúng tôi cam kết chất lượng, dịch vụ và sự hài lòng của khách hàng.
         </p>
       </section>
 

@@ -1,80 +1,78 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getFavorites, addFavorite, removeFavorite } from '../services/favoriteService';
+import { useAuth } from './AuthContext';
+import { toast } from 'react-toastify';
 
 const FavoriteContext = createContext();
 
-export function FavoriteProvider({ children }) {
+export const FavoriteProvider = ({ children }) => {
+  const [favorites, setFavorites] = useState([]);
   const { user } = useAuth();
-  const [favorites, setFavorites] = useState(() => {
-    const savedFavorites = localStorage.getItem('favorites');
-    return savedFavorites ? JSON.parse(savedFavorites) : [];
-  });
 
-  // Load favorites từ backend khi đăng nhập
   useEffect(() => {
-    const fetchFavorites = async () => {
-      if (user) {
-        try {
-          const response = await getFavorites();
-          setFavorites(response);
-          localStorage.setItem('favorites', JSON.stringify(response));
-        } catch (error) {
-          console.error('Error fetching favorites:', error);
-          toast.error('Không thể tải danh sách yêu thích!');
-        }
-      }
-    };
-    fetchFavorites();
+    if (user) {
+      fetchFavorites();
+    } else {
+      setFavorites([]);
+    }
   }, [user]);
 
-  // Lưu vào localStorage khi favorites thay đổi
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-  }, [favorites]);
+  const fetchFavorites = async () => {
+    try {
+      const data = await getFavorites();
+      setFavorites(data.filter(f => f && f._id));
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách yêu thích:', error);
+      toast.error('Lỗi tải danh sách yêu thích!');
+    }
+  };
 
   const addToFavorites = async (product) => {
-    if (!product || !product._id) {
-      toast.error('Dữ liệu sản phẩm không hợp lệ!');
-      return;
-    }
-    if (favorites.some((item) => item._id === product._id)) {
-      toast.info('Sản phẩm đã trong danh sách yêu thích!');
-      return;
-    }
+    if (!product?._id) throw new Error('Sản phẩm không có ID hợp lệ!');
+    const oldFavorites = [...favorites];
+    setFavorites([...favorites, product]);
     try {
-      if (user) {
-        await addFavorite(product._id); // Gọi API nếu đăng nhập
-      }
-      setFavorites((prev) => [...prev, { ...product }]);
+      const data = await addFavorite(product._id);
+      setFavorites(data.favorites.filter(f => f && f._id));
       toast.success('Đã thêm vào yêu thích!');
+      fetchFavorites();
     } catch (error) {
-      console.error('Error adding to favorites:', error);
-      toast.error('Không thể thêm vào yêu thích!');
+      setFavorites(oldFavorites);
+      console.error('Lỗi khi thêm yêu thích:', error);
+      toast.error('Lỗi thêm vào yêu thích!');
+      throw error;
     }
   };
 
-  const removeFromFavorites = async (id) => {
+  const removeFromFavorites = async (productId) => {
+    if (!productId) {
+      console.warn('ID sản phẩm không hợp lệ, bỏ qua');
+      return;
+    }
+    const oldFavorites = [...favorites];
+    setFavorites(favorites.filter(f => f._id !== productId));
     try {
-      if (user) {
-        await removeFavorite(id); // Gọi API nếu đăng nhập
-      }
-      setFavorites((prev) => prev.filter((item) => item._id !== id));
+      const data = await removeFavorite(productId);
+      setFavorites(data.favorites.filter(f => f && f._id));
       toast.success('Đã xóa khỏi yêu thích!');
+      fetchFavorites();
     } catch (error) {
-      console.error('Error removing from favorites:', error);
-      toast.error('Không thể xóa khỏi yêu thích!');
+      setFavorites(oldFavorites);
+      console.error('Lỗi khi xóa yêu thích:', error);
+      toast.error('Lỗi xóa khỏi yêu thích!');
     }
   };
 
-  const isFavorite = (id) => favorites.some((item) => item._id === id);
+  const isFavorite = (productId) => {
+    return favorites.some((fav) => fav?._id === productId);
+  };
 
+  console.log('Providing context value:', { favorites, addToFavorites, removeFromFavorites, isFavorite, setFavorites, fetchFavorites }); // Debug
   return (
-    <FavoriteContext.Provider value={{ favorites, addToFavorites, removeFromFavorites, isFavorite }}>
+    <FavoriteContext.Provider value={{ favorites, addToFavorites, removeFromFavorites, isFavorite, setFavorites, fetchFavorites }}>
       {children}
     </FavoriteContext.Provider>
   );
-}
+};
 
 export const useFavorite = () => useContext(FavoriteContext);

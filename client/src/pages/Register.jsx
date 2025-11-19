@@ -1,4 +1,4 @@
-// src/pages/Register.jsx (Cập nhật để sử dụng setUser từ context)
+// src/pages/Register.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import RegisterForm from '../components/auth/RegisterForm';
@@ -20,7 +20,7 @@ const Register = () => {
       toast.success(response.message || 'Đăng ký thành công!', {
         autoClose: 3000,
       });
-      setUser(response.user); // Cập nhật user ngay lập tức
+      setUser(response.token, response.user); // Gọi updateAuth với token và user
       setTimeout(() => {
         navigate('/login');
       }, 1000);

@@ -19,14 +19,21 @@
     "@fortawesome/react-fontawesome": "^0.2.3",
     "@react-oauth/google": "^0.12.2",
     "axios": "^1.11.0",
+    "chart.js": "^4.5.1",
+    "date-fns": "^4.1.0",
+    "jwt-decode": "^4.0.0",
     "lucide-react": "^0.539.0",
     "react": "^19.1.1",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
+    "react-modal": "^3.16.3",
     "react-router-dom": "^7.8.1",
     "react-slick": "^0.31.0",
     "react-toastify": "^11.0.5",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.8.1",
+    "sweetalert2": "^11.26.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
