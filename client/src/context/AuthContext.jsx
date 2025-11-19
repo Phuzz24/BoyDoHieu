@@ -11,7 +11,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { cart, setCart } = useCart() || { cart: [], setCart: () => {} };
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 
   const mergeCarts = (backendCart, localCart) => {
     const merged = [...backendCart];
@@ -42,13 +43,15 @@ export const AuthProvider = ({ children }) => {
       console.log('[AUTH UPDATE] Set user with role:', userToSet.role);
 
       // THÊM: Join socket room sau login
-      if (userToSet.role === 'admin') {
-        socket.emit('joinAdminRoom');
-        console.log('[SOCKET] Joined admin room');
-      } else {
-        socket.emit('joinUserRoom', userToSet._id);
-        console.log('[SOCKET] Joined user room:', userToSet._id);
-      }
+     if (userToSet.role === 'admin') {
+    socket.connect();  // Connect trước emit
+    socket.emit('joinAdminRoom');
+    console.log('[SOCKET] Joined admin room');
+  } else {
+    socket.connect();
+    socket.emit('joinUserRoom', userToSet._id);
+    console.log('[SOCKET] Joined user room:', userToSet._id);
+  }
 
       // THÊM: Listen socket events
       socket.on('newOrder', (data) => {
