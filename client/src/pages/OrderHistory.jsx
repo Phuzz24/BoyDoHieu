@@ -11,11 +11,15 @@ const OrderHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);  // NEW: Filtered list
   const [productsMap, setProductsMap] = useState(new Map());
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
-  const API_URL = 'http://localhost:5000/api';
+  const [statusFilter, setStatusFilter] = useState('all');  // NEW: Filter status
+  const [minPrice, setMinPrice] = useState('');  // NEW: Min total
+  const [maxPrice, setMaxPrice] = useState('');  // NEW: Max total
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (user === null) return;
@@ -30,7 +34,7 @@ const OrderHistory = () => {
   useEffect(() => {
     if (user) {
       socket.on('orderStatusUpdate', (data) => {
-        toast.info(data.message);
+        toast.info(data.message || 'Trạng thái đơn hàng đã thay đổi!');
         loadData();
       });
       return () => socket.off('orderStatusUpdate', loadData);
@@ -50,6 +54,7 @@ const OrderHistory = () => {
         }),
       ]);
       setOrders(ordersRes.data);
+      setFilteredOrders(ordersRes.data);  // Initial filtered = all
       const map = new Map();
       productsRes.data.forEach((p) => map.set(p._id.toString(), p));
       setProductsMap(map);
@@ -60,6 +65,18 @@ const OrderHistory = () => {
       setLoading(false);
     }
   };
+
+  // NEW: Filter orders by status & price when change
+  useEffect(() => {
+    let filtered = orders;
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(order => order.status === statusFilter);
+    }
+    const min = Number(minPrice) || 0;
+    const max = Number(maxPrice) || Infinity;
+    filtered = filtered.filter(order => order.total >= min && order.total <= max);
+    setFilteredOrders(filtered);
+  }, [statusFilter, minPrice, maxPrice, orders]);
 
   const getProductId = (item) => {
     if (item.productId) return item.productId;
@@ -151,21 +168,48 @@ const OrderHistory = () => {
   };
 
   const getStatusSteps = (status) => {
-    const statuses = ['pending', 'shipped', 'delivered'];
-    return statuses.map((s, index) => ({
-      name: s === 'pending' ? 'Chờ xử lý' : s === 'shipped' ? 'Đang giao' : 'Đã giao',
-      completed: statuses.indexOf(status) >= index,
-    }));
-  };
+  const statuses = [
+    { name: 'Chờ xử lý', color: 'bg-yellow-500 text-yellow-600 border-yellow-400' },
+    { name: 'Đang giao', color: 'bg-blue-500 text-blue-600 border-blue-400' },
+    { name: 'Đã giao', color: 'bg-green-500 text-green-600 border-green-400' },
+    { name: 'Đã hủy', color: 'bg-red-500 text-red-600 border-red-400' },
+  ];
+  return statuses.map((step, index) => ({
+    ...step,
+    completed: ['pending', 'shipping', 'completed', 'cancelled'].indexOf(status) >= index && index < 3,
+    isCancelled: status === 'cancelled' && index === 3
+  }));
+};
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending': return 'text-yellow-500';
-      case 'shipped': return 'text-blue-500';
-      case 'delivered': return 'text-green-500';
-      default: return 'text-red-500';
-    }
-  };
+ const getStatusText = (status) => {
+  switch (status) {
+    case 'pending':   return 'Chờ xử lý';
+    case 'shipping':  return 'Đang giao';       // ĐÚNG KEY
+    case 'completed': return 'Đã giao';         // ĐÚNG KEY
+    case 'cancelled': return 'Đã hủy';          // ĐÚNG KEY (2 chữ 'l')
+    default:          return 'Không xác định';
+  }
+};
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'pending':   return 'text-yellow-600 bg-yellow-100';
+    case 'shipping':  return 'text-blue-600 bg-blue-100';
+    case 'completed': return 'text-green-600 bg-green-100';
+    case 'cancelled': return 'text-red-600 bg-red-100';
+    default:          return 'text-gray-600 bg-gray-100';
+  }
+};
+
+const getStatusBadge = (status) => {
+  const text = getStatusText(status);
+  const colorClass = getStatusColor(status);
+  return (
+    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${colorClass}`}>
+      {text}
+    </span>
+  );
+};
 
   if (loading) {
     return (
@@ -203,6 +247,7 @@ const OrderHistory = () => {
                     <p className="text-lg font-semibold text-luxuryBlack dark:text-luxuryWhite mb-3">
                       Mã đơn hàng: <span className="text-luxuryGold">{order.orderCode || order._id.slice(-6)}</span>
                     </p>
+                    {getStatusBadge(order.status)}
                     <p className="text-md text-gray-600 dark:text-gray-400 mb-2">
                       Ngày đặt: {new Date(order.createdAt).toLocaleString('vi-VN')}
                     </p>
@@ -217,9 +262,15 @@ const OrderHistory = () => {
                     <p className="text-md font-semibold text-luxuryBlack dark:text-luxuryWhite mb-3">Trạng thái đơn hàng</p>
                     <div className="flex items-center space-x-4">
                       {getStatusSteps(order.status).map((step, index) => (
-                        <div key={index} className="flex-1">
-                          <div className={`h-2 ${step.completed ? 'bg-luxuryGold' : 'bg-gray-300 dark:bg-gray-600'} rounded-full`}></div>
-                          <p className={`text-sm mt-2 ${step.completed ? 'text-luxuryGold font-semibold' : 'text-gray-500 dark:text-gray-400'}`}>
+                        <div key={index} className="flex-1 text-center">
+                          <div className={`h-2 rounded-full ${
+                            step.isCancelled ? 'bg-red-500' : 
+                            step.completed ? 'bg-luxuryGold' : 'bg-gray-300 dark:bg-gray-600'
+                          }`}></div>
+                          <p className={`text-sm mt-2 ${
+                            step.isCancelled ? 'text-red-600 font-bold' :
+                            step.completed ? 'text-luxuryGold font-semibold' : 'text-gray-500 dark:text-gray-400'
+                          }`}>
                             {step.name}
                           </p>
                         </div>
@@ -308,10 +359,14 @@ const OrderHistory = () => {
                   Tổng tiền: <span className="font-semibold text-luxuryGold">{selectedOrder.total.toLocaleString('vi-VN')}₫</span>
                 </p>
                 <p className="text-md text-gray-600 dark:text-gray-400 mb-2">
-                  Trạng thái: <span className={`font-semibold ${getStatusColor(selectedOrder.status)}`}>
-                    {selectedOrder.status === 'pending' ? 'Chờ xử lý' : selectedOrder.status === 'shipped' ? 'Đang giao' : selectedOrder.status === 'delivered' ? 'Đã giao' : 'Đã hủy'}
-                  </span>
+                    Trạng thái: {getStatusBadge(selectedOrder.status)}
                 </p>
+                {/* FIX: Hiển thị lý do hủy nếu có (thêm field canceledReason ở BE nếu chưa) */}
+                {selectedOrder.status === 'canceled' && selectedOrder.canceledReason && (
+                  <p className="text-sm text-red-500 dark:text-red-400">
+                    Lý do hủy: {selectedOrder.canceledReason}
+                  </p>
+                )}
                 <p className="text-md text-gray-600 dark:text-gray-400">Email xác nhận: {selectedOrder.email}</p>
               </div>
             </div>

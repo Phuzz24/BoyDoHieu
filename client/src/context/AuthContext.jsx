@@ -1,6 +1,7 @@
+// src/context/AuthContext.jsx – PHIÊN BẢN HOÀN HẢO SAU FIX
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import socket from '../services/socket'; // THÊM: Import socket
+import socket from '../services/socket';
 import { useCart } from './CartContext';
 import { toast } from 'react-toastify';
 
@@ -9,132 +10,106 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUserInternal] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { cart, setCart } = useCart() || { cart: [], setCart: () => {} };
+  const { setCart } = useCart();
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-
-  const mergeCarts = (backendCart, localCart) => {
-    const merged = [...backendCart];
-    localCart.forEach(localItem => {
-      const exists = merged.find(item =>
-        item._id === localItem._id &&
-        item.selectedSize === localItem.selectedSize &&
-        item.selectedColor === localItem.selectedColor
-      );
-      if (!exists) {
-        merged.push(localItem);
-      } else {
-        exists.quantity = Math.max(exists.quantity || 1, localItem.quantity || 1);
-      }
-    });
-    return merged;
-  };
-
   const updateAuth = (token, userData) => {
-    const userToSet = userData || JSON.parse(localStorage.getItem('user') || 'null');
     if (token) localStorage.setItem('token', token);
-    if (userToSet && userToSet.role) {
-      localStorage.setItem('user', JSON.stringify(userToSet));
-      setUserInternal(userToSet);
-      const mergedCart = mergeCarts(userToSet.cart || [], JSON.parse(localStorage.getItem('cart') || '[]'));
-      setCart(mergedCart);
-      localStorage.setItem('cart', JSON.stringify(mergedCart));
-      console.log('[AUTH UPDATE] Set user with role:', userToSet.role);
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUserInternal(userData);
 
-      // THÊM: Join socket room sau login
-     if (userToSet.role === 'admin') {
-    socket.connect();  // Connect trước emit
-    socket.emit('joinAdminRoom');
-    console.log('[SOCKET] Joined admin room');
-  } else {
-    socket.connect();
-    socket.emit('joinUserRoom', userToSet._id);
-    console.log('[SOCKET] Joined user room:', userToSet._id);
-  }
+      // Merge cart
+      const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const merged = mergeCarts(userData.cart || [], localCart);
+      setCart(merged);
+      localStorage.setItem('cart', JSON.stringify(merged));
 
-      // THÊM: Listen socket events
-      socket.on('newOrder', (data) => {
-        toast.info(`Đơn hàng mới từ ${data.customer}: ${data.total}đ`);
-      });
-
-      socket.on('orderStatusUpdate', (data) => {
-        toast.info(data.message);
-        // Optional: Refresh orders nếu ở OrderHistory
-      });
-
-      socket.on('notification', (notif) => {
-        toast.info(notif.message);
-      });
+      // Socket join room
+      socket.connect();
+      if (userData.role === 'admin') {
+        socket.emit('joinAdminRoom');
+      } else {
+        socket.emit('joinUserRoom', userData._id);
+      }
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('cart');
     setUserInternal(null);
     setCart([]);
-    localStorage.setItem('cart', JSON.stringify([]));
-    socket.disconnect(); // THÊM: Disconnect socket
-    console.log('[AUTH] Logged out');
+    socket.disconnect();
+  };
+
+  const mergeCarts = (backendCart, localCart) => {
+    const map = new Map();
+    [...backendCart, ...localCart].forEach(item => {
+      const key = `${item._id}-${item.selectedSize}-${item.selectedColor}`;
+      if (map.has(key)) {
+        map.get(key).quantity = Math.max(map.get(key).quantity, item.quantity || 1);
+      } else {
+        map.set(key, { ...item, quantity: item.quantity || 1 });
+      }
+    });
+    return Array.from(map.values());
   };
 
   useEffect(() => {
-    const loadUser = async () => {
-      const token = localStorage.getItem('token');
-      console.log('[AUTH LOAD] Token exists:', !!token);
+  const loadUser = async () => {
+    // QUAN TRỌNG NHẤT: CHỈ LOAD USER KHI KHÔNG Ở TRANG LOGIN!!!
+    const publicPaths = ['/login', '/register', '/forgot-password', '/reset'];
+    const currentPath = window.location.pathname;
 
-      if (token) {
-        const localUser = JSON.parse(localStorage.getItem('user') || 'null');
-        if (localUser && localUser.role) {
-          console.log('[AUTH LOAD] Using local user fallback:', localUser.username);
-          updateAuth(null, localUser);
-          setLoading(false);
-          return;
-        }
-
-        try {
-          const response = await axios.get(`${API_URL}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-            validateStatus: (status) => status >= 200 && status < 300 || status === 304,
-          });
-          let fetchedUser = response.data.user;
-          console.log('[AUTH LOAD] Server /me response:', fetchedUser ? 'OK' : 'Empty');
-
-          if (response.status === 304 || !fetchedUser) {
-            fetchedUser = localUser || null;
-            console.log('Using local user for 304 or empty:', fetchedUser);
-          }
-          if (fetchedUser && fetchedUser.role) {
-            updateAuth(token, fetchedUser);
-            console.log('User loaded from server:', fetchedUser.username);
-          } else {
-            throw new Error('No valid user data');
-          }
-        } catch (error) {
-          console.error('Error loading user from server:', error);
-          if (error.response?.status === 401) {
-            console.log('[AUTH LOAD] Token invalid (401), logout');
-            logout();
-            toast.error('Phiên đăng nhập hết hạn!');
-          } else {
-            if (localUser && localUser.role) {
-              console.log('[AUTH LOAD] Server error, fallback local:', localUser.username);
-              updateAuth(token, localUser);
-            } else {
-              console.log('[AUTH LOAD] No fallback, logout');
-              logout();
-              toast.error('Lỗi kết nối, vui lòng đăng nhập lại!');
-            }
-          }
-        }
-      } else {
-        console.log('[AUTH LOAD] No token, skip');
-      }
+    if (publicPaths.some(path => currentPath.startsWith(path))) {
       setLoading(false);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.user) {
+        updateAuth(token, response.data.user);
+      }
+    } catch (error) {
+      console.log('Token không hợp lệ – bỏ qua (không can thiệp localStorage)');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadUser();
+}, []); // CHỈ CHẠY 1 LẦN!!!
+
+  // Listen socket chỉ 1 lần
+  useEffect(() => {
+    socket.on('orderStatusUpdate', (data) => {
+      toast.info(data.message || 'Đơn hàng của bạn đã được cập nhật!');
+    });
+
+    socket.on('newOrder', (data) => {
+      if (user?.role === 'admin') {
+        toast.info(`Đơn hàng mới #${data.orderCode || data.orderId}`);
+      }
+    });
+
+    return () => {
+      socket.off('orderStatusUpdate');
+      socket.off('newOrder');
     };
-    loadUser();
-  }, []);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, setUser: updateAuth, logout, loading }}>

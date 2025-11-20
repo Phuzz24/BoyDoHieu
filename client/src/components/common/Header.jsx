@@ -3,15 +3,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import axios from 'axios';  // Import axios cho fetch notifications
+import socket from '../../services/socket';  // Socket for realtime
 
 const Header = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserOpen, setIsUserOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);  // NEW: Notification dropdown
+  const [notifications, setNotifications] = useState([]);  // NEW: List notifications
+  const [unreadCount, setUnreadCount] = useState(0);  // NEW: Unread badge
   const navigate = useNavigate();
   const location = useLocation();
   const { cart, removeFromCart } = useCart();
   const { user, logout } = useAuth();
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';  // Define API_URL
 
   useEffect(() => {
     console.log('Header cart updated:', cart);
@@ -22,12 +28,93 @@ const Header = () => {
     setIsCartOpen(false);
     setIsUserOpen(false);
     setIsMobileMenuOpen(false);
+    setIsNotificationOpen(false);
   }, [location.pathname]);
+
+  // Load user notifications on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const loadNotifications = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/notifications/user`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(response.data.notifications || []);
+        setUnreadCount(response.data.unreadCount || 0);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
+
+    loadNotifications();
+  }, [user]);
+
+  // src/components/Header.jsx hoặc bất kỳ file nào import socket
+
+useEffect(() => {
+  if (!user) return;
+
+  // Join room của chính user đó
+  socket.emit('joinUserRoom', user.id);
+
+  // Lắng nghe cập nhật trạng thái đơn hàng
+  socket.on('orderStatusUpdate', (data) => {
+    toast.success(data.message || 'Trạng thái đơn hàng đã thay đổi!', {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+
+    // Nếu đang ở trang lịch sử đơn hàng → reload luôn
+    if (window.location.pathname === '/order-history') {
+      window.location.reload(); // hoặc gọi lại API loadData()
+    }
+  });
+
+  return () => {
+    socket.off('orderStatusUpdate');
+  };
+}, [user]);
+
+  // Mark as read
+  const markAsRead = async (notifId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/notifications/${notifId}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(notifs => notifs.map(n => n._id === notifId ? { ...n, read: true } : n));
+      setUnreadCount(count => Math.max(0, count - 1));
+    } catch (error) {
+      console.error('Error marking read:', error);
+    }
+  };
+
+  // Clear all unread
+  const clearAll = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API_URL}/notifications/clear`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(notifs => notifs.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
+  };
 
   const handleCartClick = () => {
     console.log('Toggling cart dropdown, current isCartOpen:', isCartOpen, 'cart:', cart);
     setIsCartOpen(!isCartOpen);
     setIsUserOpen(false);
+    setIsNotificationOpen(false);
   };
 
   const handleUserClick = () => {
@@ -36,7 +123,14 @@ const Header = () => {
     } else {
       setIsUserOpen(!isUserOpen);
       setIsCartOpen(false);
+      setIsNotificationOpen(false);
     }
+  };
+
+  const handleNotificationClick = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+    setIsCartOpen(false);
+    setIsUserOpen(false);
   };
 
   const handleLogout = () => {
@@ -74,7 +168,7 @@ const Header = () => {
               </Link>
             </div>
             <ul className="hidden lg:flex items-center justify-start gap-6 md:gap-8 py-3 sm:justify-center">
-              {['Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
+              {[' Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
                 const to =
                   item === 'Trang chủ'
                     ? '/'
@@ -94,7 +188,7 @@ const Header = () => {
                       className={`flex text-sm font-bold px-3 py-2 rounded-md transition-all duration-300 border-b-2 ${
                         isActive
                           ? 'text-luxuryGold border-luxuryGold bg-gradient-to-t from-luxuryGold/10'
-                          : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t hover:from-luxuryGold/10 hover:scale-105'
+                          : 'border-transparent text-gray-900 dark:text-luxuryWhite hover:text-luxuryGold hover:border-luxuryGold hover:bg-gradient-to-t from-luxuryGold/10 hover:scale-105'
                       }`}
                     >
                       {item}
@@ -107,6 +201,77 @@ const Header = () => {
 
           {/* Actions (Desktop) */}
           <div className="flex items-center lg:space-x-2">
+            {/* NEW: Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={handleNotificationClick}
+                type="button"
+                className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-bold transition-all duration-300 border-2 ${
+                  isNotificationOpen
+                    ? 'border-luxuryGold bg-luxuryGold/20 scale-105 shadow-xl text-luxuryGold'
+                    : 'border-transparent bg-gradient-to-br from-luxuryGold/10 to-gray-100 dark:from-luxuryBlack/20 dark:to-gray-800 text-gray-900 dark:text-luxuryWhite hover:border-luxuryGold hover:bg-gradient-to-br hover:from-luxuryGold/10 hover:scale-105 hover:shadow-xl'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                <span className="hidden sm:flex">Thông báo</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              {/* NEW: Notification Dropdown */}
+              <div
+                className={`z-50 absolute right-0 mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-luxuryGold/20 dark:border-luxuryBlack/20 p-4 transition-all duration-300 transform origin-top-right ${
+                  isNotificationOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                } max-h-96 overflow-y-auto`}
+              >
+                {notifications.length === 0 ? (
+                  <p className="text-center text-gray-600 dark:text-gray-400 py-4">Không có thông báo mới</p>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {notifications.map((notif) => (
+                        <div
+                          key={notif._id}
+                          className={`p-3 rounded-lg transition-all duration-300 ${
+                            notif.read ? 'bg-gray-50 dark:bg-gray-800' : 'bg-luxuryGold/10 dark:bg-gray-700'
+                          }`}
+                        >
+                          <p className={`text-sm font-medium ${notif.read ? 'text-gray-900 dark:text-gray-300' : 'text-luxuryGold'}`}>
+                            {notif.title || 'Thông báo mới'}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            {notif.message || notif.body}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                            {new Date(notif.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {!notif.read && (
+                            <button
+                              onClick={() => markAsRead(notif._id)}
+                              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+                            >
+                              Đánh dấu đã đọc
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={clearAll}
+                        className="w-full mt-4 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-300 text-sm"
+                      >
+                        Đánh dấu tất cả đã đọc
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
             {/* Giỏ hàng */}
             <div className="relative">
               <button
@@ -123,7 +288,7 @@ const Header = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 100 4 2 2 0 000-4zm8 0a2 2 0 100 4 2 2 0 000-4zm-8.5-3h9.25L19 7H7.312"
+                    d="M5 4h1.5L9 16m0 0h8m-8 0a2 2 0 100 4 2 2 0 000-4Zm8 0a2 2 0 100 4 2 2 0 000-4Zm-8.5-3h9.25L19 7H7.312"
                   />
                 </svg>
                 <span className="hidden sm:flex">Giỏ hàng của tôi</span>
@@ -274,7 +439,6 @@ const Header = () => {
                 )}
               </div>
             </div>
-
             {/* Tài khoản/Avatar */}
             <div className="relative hidden lg:block">
               <button
@@ -359,7 +523,6 @@ const Header = () => {
                 </div>
               )}
             </div>
-
             {!user && (
               <Link
                 to="/register"
@@ -372,7 +535,6 @@ const Header = () => {
                 Đăng ký
               </Link>
             )}
-
             <button
               type="button"
               data-collapse-toggle="ecommerce-navbar-menu-1"
@@ -412,7 +574,7 @@ const Header = () => {
           }`}
         >
           <ul className="text-gray-900 dark:text-luxuryWhite text-sm font-bold space-y-3">
-            {['Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
+            {[' Trang chủ', 'Sản phẩm', 'Dịch vụ Spa', 'Liên hệ'].map((item) => {
               const to =
                 item === 'Trang chủ'
                   ? '/'
@@ -479,10 +641,7 @@ const Header = () => {
                       />
                     ) : (
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                          strokeWidth="2"
-                          d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z"
-                        />
+                        <path strokeWidth="2" d="M7 17v1a1 1 0 001 1h8a1 1 0 001-1v-1a3 3 0 00-3-3h-4a3 3 0 00-3 3Zm8-9a3 3 0 11-6 0 3 3 0 016 0Z" />
                       </svg>
                     )}
                     <span>{user ? user.username : 'Đăng nhập'}</span>

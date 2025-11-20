@@ -27,7 +27,7 @@ const Products = () => {
       setLoading(true);
       try {
         const response = await getProducts();
-        const products = response.data;
+        const products = Array.isArray(response.data) ? response.data : [];  // Guard non-array
         setProducts(products);
         setFilteredProducts(products);
         setCategories([...new Set(products.map((p) => p.category))]);
@@ -47,11 +47,24 @@ const Products = () => {
     let filtered = products;
 
     if (searchQuery) {
+      // Filter với search
       filtered = filtered.filter((p) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
+      // Sort để kết quả search xuất hiện ở đầu (ưu tiên match chính xác name, rồi brand/description)
+      filtered = [...filtered].sort((a, b) => {
+        const aNameMatch = a.name.toLowerCase().includes(searchQuery.toLowerCase()) ? 2 : 0;
+        const bNameMatch = b.name.toLowerCase().includes(searchQuery.toLowerCase()) ? 2 : 0;
+        const aBrandMatch = a.brand.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0;
+        const bBrandMatch = b.brand.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0;
+        const aDescMatch = a.description.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0;
+        const bDescMatch = b.description.toLowerCase().includes(searchQuery.toLowerCase()) ? 1 : 0;
+        const aScore = aNameMatch + aBrandMatch + aDescMatch;
+        const bScore = bNameMatch + bBrandMatch + bDescMatch;
+        return bScore - aScore;  // Cao điểm trước (top)
+      });
     }
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((p) => selectedCategories.includes(p.category));
@@ -66,6 +79,7 @@ const Products = () => {
       (p) => (p.discountPrice || p.price) >= priceRange.min && (p.discountPrice || p.price) <= priceRange.max
     );
 
+    // Sort chung (sau search filter)
     if (sortBy === "price-asc") {
       filtered = [...filtered].sort((a, b) => (a.discountPrice || a.price) - (b.discountPrice || b.price));
     } else if (sortBy === "price-desc") {
@@ -212,18 +226,19 @@ const Products = () => {
           </button>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedProducts.length === 0 ? (
-            <p className="col-span-full text-center text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm</p>
-          ) : (
+        {/* Grid - Fix align left/top cho single/few items */}
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-start">
+          {Array.isArray(paginatedProducts) && paginatedProducts.length > 0 ? (
             <>
-             <div className="col-span-full mb-4 text-gray-700 dark:text-gray-300">
+              <div className="col-span-full mb-4 text-gray-700 dark:text-gray-300">
                 Tìm thấy {filteredProducts.length} sản phẩm
               </div>
               {paginatedProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />  // Xóa <Link> outer
+                <ProductCard key={product._id} product={product} />
               ))}
             </>
+          ) : (
+            <p className="col-span-full text-center text-gray-500 dark:text-gray-400">Không tìm thấy sản phẩm</p>
           )}
         </div>
       </div>

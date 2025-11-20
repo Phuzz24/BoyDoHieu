@@ -42,11 +42,14 @@ export const resetPassword = async (token, newPassword) => {
 };
 
 // Change password (protected)
-export const changePassword = async (oldPassword, newPassword) => {
+export const changePassword = async (currentPassword, newPassword) => {
   try {
-    const response = await api.post('/auth/change-password', { oldPassword, password: newPassword });
+    const response = await api.post('/auth/change-password', {
+      currentPassword,
+      newPassword
+    });
     return response.data;
   } catch (error) {
-    throw error;
+    throw error.response?.data || error;
   }
 };

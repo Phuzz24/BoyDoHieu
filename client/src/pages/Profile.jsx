@@ -7,10 +7,11 @@ import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaCalendarAlt, FaVenusMars
 import { Link } from 'react-router-dom';
 
 const Profile = () => {
-  const { user, loading: contextLoading, updateUser } = useAuth();
+  const { user, loading: contextLoading, setUser } = useAuth();  // setUser là updateAuth
   const navigate = useNavigate();
   const [localLoading, setLocalLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     fullName: '',
@@ -22,7 +23,7 @@ const Profile = () => {
     avatar: null,
   });
   const [avatarPreview, setAvatarPreview] = useState('');
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     if (contextLoading) return setLocalLoading(true);
@@ -33,11 +34,38 @@ const Profile = () => {
       return;
     }
     loadProfileData();
-  }, [user, contextLoading, navigate]);
+  }, [user, contextLoading, navigate]);  // Depend user để re-run khi context update
 
   const loadProfileData = async () => {
     setLocalLoading(true);
     try {
+      // Fetch fresh user từ /me để đảm bảo data full (createdAt, all fields)
+      const token = localStorage.getItem('token');
+      let freshUser = user;  // Fallback to context user nếu /me fail
+      if (token) {
+        const response = await axios.get(`${API_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        freshUser = response.data.user;
+        console.log('[PROFILE LOAD] Fresh user from /me:', freshUser);  // Debug: Check fields trả về
+      }
+
+      // Set local formData/avatar từ freshUser (không setUser ở đây để tránh loop)
+      setFormData({
+        username: freshUser.username || '',
+        fullName: freshUser.fullName || '',
+        gender: freshUser.gender || '',
+        phone: freshUser.phone || '',
+        address: freshUser.address || '',
+        dateOfBirth: freshUser.dateOfBirth ? new Date(freshUser.dateOfBirth).toISOString().split('T')[0] : '',
+        email: freshUser.email || '',
+        avatar: null,
+      });
+      setAvatarPreview(freshUser.avatar || 'https://tse3.mm.bing.net/th/id/OIP.ujXKE1mONB_xfL7vwJUR3QHaHa?r=0&cb=thfvnext&rs=1&pid=ImgDetMain&o=7&rm=3');
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+      toast.error('Lỗi khi tải thông tin tài khoản!');
+      // Fallback to context user nếu /me fail
       setFormData({
         username: user.username || '',
         fullName: user.fullName || '',
@@ -49,9 +77,6 @@ const Profile = () => {
         avatar: null,
       });
       setAvatarPreview(user.avatar || 'https://tse3.mm.bing.net/th/id/OIP.ujXKE1mONB_xfL7vwJUR3QHaHa?r=0&cb=thfvnext&rs=1&pid=ImgDetMain&o=7&rm=3');
-    } catch (error) {
-      console.error('Error loading profile data:', error);
-      toast.error('Lỗi khi tải thông tin tài khoản!');
     } finally {
       setLocalLoading(false);
     }
@@ -89,6 +114,8 @@ const Profile = () => {
       return;
     }
 
+    setSubmitLoading(true);
+
     const submitData = new FormData();
     submitData.append('username', formData.username);
     submitData.append('fullName', formData.fullName);
@@ -109,38 +136,41 @@ const Profile = () => {
         return;
       }
 
-      const response = await axios.put(
+      // Gọi PUT update
+      const updateResponse = await axios.put(
         `${API_URL}/auth/profile`,
         submitData,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
-      // Cập nhật context user
-      updateUser(response.data.user);
+
+      console.log('[PROFILE SUBMIT] Update response:', updateResponse.data);  // Debug: Check fields trả về
+
       toast.success('Cập nhật thông tin thành công!');
       
-      // Reset: Đóng editing mode, reload data từ user mới, và force refresh UI
+      // FIX: Không reload F5 (tránh double reload). Thay bằng fetch fresh /me và sync local/context
       setEditing(false);
-      loadProfileData(); // Reload formData từ user mới (trigger useEffect nếu cần)
-      
-      // Soft reset UI (không hard reload trang để tránh mất state)
-      // Nếu cần hard reset: window.location.reload(); nhưng tránh dùng
+      await loadProfileData();  // Re-load data mới từ /me, trigger useEffect sync context/formData
+      // Không setUser ở đây vì loadProfileData đã fetch fresh, và useEffect sẽ sync nếu cần
     } catch (error) {
       console.error('Update profile error:', error.response?.data || error.message);
       if (error.response?.status >= 400) {
         toast.error(error.response?.data?.message || 'Lỗi khi cập nhật thông tin tài khoản!');
       } else {
-        toast.success('Cập nhật thành công!');
+        toast.error('Lỗi kết nối server!');
       }
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
   const handleCancel = () => {
     setEditing(false);
-    loadProfileData(); // Reset form về data gốc
+    loadProfileData();
   };
 
   const handleImageError = (e) => {
@@ -164,10 +194,14 @@ const Profile = () => {
     return null;
   }
 
+  // FIX: Guard Invalid Date cho createdAt với fallback nếu null
+  const joinDate = user.createdAt && !isNaN(new Date(user.createdAt).getTime()) 
+    ? new Date(user.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' }) 
+    : 'Chưa xác định';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header: Avatar & Welcome - Đơn giản */}
         <div className="text-center mb-8">
           <div className="relative inline-block mb-6">
             <img
@@ -186,7 +220,7 @@ const Profile = () => {
             )}
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Chào mừng, {formData.username}!</h1>
-          <p className="text-gray-600 dark:text-gray-400">Thành viên từ {new Date(user.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="text-gray-600 dark:text-gray-400">Thành viên từ {joinDate}</p>
           {!editing && (
             <button
               onClick={() => setEditing(true)}
@@ -197,141 +231,144 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Personal Info - Icon, bold label, value thường */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 mb-8 border border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
             <FaUser className="mr-2 text-gray-500" />
             Thông tin cá nhân
           </h2>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <FaUser className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Tên đầy đủ</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white">{formData.fullName || 'Chưa cập nhật'}</p>
-                ) : (
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
-                    placeholder="Nhập tên đầy đủ"
-                  />
-                )}
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <FaUser className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Tên đầy đủ</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white">{formData.fullName || 'Chưa cập nhật'}</p>
+                  ) : (
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
+                      placeholder="Nhập tên đầy đủ"
+                    />
+                  )}
+                </div>
               </div>
+              <div className="flex items-start space-x-3">
+                <FaVenusMars className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Giới tính</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white capitalize">{formData.gender || 'Chưa cập nhật'}</p>
+                  ) : (
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="">Chọn giới tính</option>
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </select>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <FaPhone className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white">{formData.phone || 'Chưa cập nhật'}</p>
+                  ) : (
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
+                      placeholder="Nhập số điện thoại"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <FaEnvelope className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white">{formData.email || 'Chưa cập nhật'}</p>
+                  ) : (
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
+                      placeholder="Nhập email"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <FaMapMarkerAlt className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white">{formData.address || 'Chưa cập nhật'}</p>
+                  ) : (
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white resize-none"
+                      placeholder="Nhập địa chỉ"
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <FaCalendarAlt className="mt-1 text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ngày sinh</label>
+                  {!editing ? (
+                    <p className="text-gray-900 dark:text-white">
+                      {formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                    </p>
+                  ) : (
+                    <input
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
+                    />
+                  )}
+                </div>
+              </div>
+              {editing && (
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-5 h-5 mt-1"></div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Avatar (Upload mới)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hỗ trợ JPG, PNG (tối đa 5MB)</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="flex items-start space-x-3">
-              <FaVenusMars className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Giới tính</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white capitalize">{formData.gender || 'Chưa cập nhật'}</p>
-                ) : (
-                  <select
-                    name="gender"
-                    value={formData.gender}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="">Chọn giới tính</option>
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
-                  </select>
-                )}
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <FaPhone className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white">{formData.phone || 'Chưa cập nhật'}</p>
-                ) : (
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
-                    placeholder="Nhập số điện thoại"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <FaEnvelope className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white">{formData.email || 'Chưa cập nhật'}</p>
-                ) : (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
-                    placeholder="Nhập email"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <FaMapMarkerAlt className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Địa chỉ</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white">{formData.address || 'Chưa cập nhật'}</p>
-                ) : (
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white resize-none"
-                    placeholder="Nhập địa chỉ"
-                  />
-                )}
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <FaCalendarAlt className="mt-1 text-gray-500 flex-shrink-0" />
-              <div className="flex-1">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Ngày sinh</label>
-                {!editing ? (
-                  <p className="text-gray-900 dark:text-white">
-                    {formData.dateOfBirth ? new Date(formData.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
-                  </p>
-                ) : (
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white"
-                  />
-                )}
-              </div>
-            </div>
-            {editing && (
-              <div className="col-span-full">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Avatar (Upload mới)</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:outline-none dark:bg-gray-700 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Hỗ trợ JPG, PNG (tối đa 5MB)</p>
-              </div>
-            )}
-          </div>
+          </form>
         </div>
 
-        {/* Actions - Đơn giản */}
         <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 mb-8">
           {!editing ? (
             <>
@@ -353,9 +390,10 @@ const Profile = () => {
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300 font-medium"
+                disabled={submitLoading}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 font-medium"
               >
-                Lưu thay đổi
+                {submitLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
               <button
                 type="button"
@@ -368,7 +406,6 @@ const Profile = () => {
           )}
         </div>
 
-        {/* Admin Section - Giữ nếu cần */}
         {user.role === 'admin' && (
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
             <h3 className="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-4">Quản trị viên</h3>

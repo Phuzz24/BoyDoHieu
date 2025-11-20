@@ -6,6 +6,7 @@ import ProductsManagement from '../components/admin/ProductsManagement';
 import OrdersManagement from '../components/admin/OrdersManagement';
 import UsersManagement from '../components/admin/UsersManagement';
 import Analytics from '../components/admin/Analytics';
+import SettingsManagement from '../components/admin/SettingsManagement';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,11 +47,7 @@ const AdminDashboard = () => {
       case 'analytics':
         return <Analytics />;
       case 'settings':
-        return (
-          <div className="text-center py-20">
-            <p className="text-gray-500">Trang cài đặt đang phát triển...</p>
-          </div>
-        );
+        return <SettingsManagement />
       default:
         return <Dashboard />;
     }
