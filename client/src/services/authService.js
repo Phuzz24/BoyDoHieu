@@ -1,39 +1,52 @@
-// src/services/authService.js (Cập nhật để cập nhật user sau đăng nhập/đăng ký)
-import axios from 'axios';
+// src/services/authService.js (Fix hardcode URL với env var)
+import api from './api';  // Import global axios instance từ api.js (đã có baseURL = VITE_API_URL)
 
-const API_URL = 'http://localhost:5000/api';
-
-export const registerUser = async ({ username, password }) => {
-  const response = await axios.post(`${API_URL}/auth/register`, { username, password });
-  if (response.data.token) {
-    localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+// Login function
+export const loginUser = async (credentials) => {
+  try {
+    const response = await api.post('/auth/login', credentials);  // Dùng api (baseURL tự switch local/prod)
+    return response.data;  // Trả {token, user, message}
+  } catch (error) {
+    throw error;  // Throw để catch ở Login.jsx
   }
-  return response.data;
 };
 
-export const loginUser = async ({ username, password }) => {
-  const response = await axios.post(`${API_URL}/auth/login`, { username, password });
-  if (response.data.token) {
-    localStorage.setItem('token', response.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+// Register function (tương tự)
+export const registerUser = async (userData) => {
+  try {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
-  return response.data; // Trả về token và user để component xử lý
 };
 
-export const forgotPassword = async ({ username }) => {
-  const response = await axios.post(`${API_URL}/auth/forgot-password`, { username });
-  return response.data;
+// Forgot password
+export const forgotPassword = async (email) => {
+  try {
+    const response = await api.post('/auth/request-password-reset', { email });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export const resetPassword = async ({ password, token }) => {
-  const response = await axios.post(`${API_URL}/auth/reset/${token}`, { password });
-  return response.data;
+// Reset password
+export const resetPassword = async (token, newPassword) => {
+  try {
+    const response = await api.post('/auth/reset-password/:token'.replace(':token', token), { password: newPassword });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
-export const changePassword = async ({ currentPassword, newPassword, token }) => {
-  const response = await axios.post(`${API_URL}/auth/change-password`, { currentPassword, newPassword }, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+// Change password (protected)
+export const changePassword = async (oldPassword, newPassword) => {
+  try {
+    const response = await api.post('/auth/change-password', { oldPassword, password: newPassword });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
