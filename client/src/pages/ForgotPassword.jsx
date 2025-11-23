@@ -1,30 +1,63 @@
-import React from 'react';
-import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
+// src/pages/auth/ForgotPassword.jsx
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { forgotPassword } from '../services/authService';
+import { sendResetCode } from '../services/authService';
 
 const ForgotPassword = () => {
-  const handleSubmit = async (formData) => {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!email.includes('@')) return toast.error('Email không hợp lệ!');
+
+    setLoading(true);
     try {
-      await forgotPassword({ username: formData.username });
-      toast.success('Yêu cầu reset mật khẩu đã gửi!');
-      window.location.href = '/login';
-    } catch (error) {
-      toast.error('Yêu cầu thất bại!');
+      await sendResetCode(email);
+      toast.success('Đã gửi mã 6 số đến email của bạn! Hãy kiểm tra hộp thư (và spam nhé)');
+      setTimeout(() => {
+        window.location.href = `/reset-password?email=${encodeURIComponent(email)}`;
+      }, 2000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Email không tồn tại!');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900">
-      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-        <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Quên Mật Khẩu
-            </h1>
-            <ForgotPasswordForm onSubmit={handleSubmit} />
-          </div>
+    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-luxuryGold">Quên Mật Khẩu</h1>
+          <p className="text-gray-600 mt-3">Nhập email để nhận mã xác nhận</p>
         </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-luxuryGold focus:outline-none text-lg"
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-luxuryGold hover:bg-amber-600 text-white font-bold py-4 rounded-xl text-lg transition"
+          >
+            {loading ? 'Đang gửi...' : 'Gửi mã xác nhận'}
+          </button>
+        </form>
+
+        <p className="text-center mt-8 text-gray-600">
+          Nhớ mật khẩu rồi?{' '}
+          <Link to="/login" className="font-bold text-luxuryGold hover:underline">
+            Đăng nhập ngay
+          </Link>
+        </p>
       </div>
     </section>
   );

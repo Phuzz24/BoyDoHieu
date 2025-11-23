@@ -7,6 +7,7 @@ import OrdersManagement from '../components/admin/OrdersManagement';
 import UsersManagement from '../components/admin/UsersManagement';
 import Analytics from '../components/admin/Analytics';
 import SettingsManagement from '../components/admin/SettingsManagement';
+import SpaManagement from '../components/admin/SpaManagement';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,6 +47,8 @@ const AdminDashboard = () => {
         return <UsersManagement />;
       case 'analytics':
         return <Analytics />;
+      case 'spa':
+        return <SpaManagement />;
       case 'settings':
         return <SettingsManagement />
       default:

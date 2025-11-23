@@ -33,13 +33,32 @@ export const forgotPassword = async (email) => {
 
 // Reset password
 export const resetPassword = async (token, newPassword) => {
+  const res = await api.post(`/auth/reset-password/${token}`, {
+    password: newPassword
+  });
+  return res.data;
+};
+
+// Thêm vào file authService.js của em
+export const sendResetCode = async (email) => {
   try {
-    const response = await api.post('/auth/reset-password/:token'.replace(':token', token), { password: newPassword });
-    return response.data;
+    const res = await api.post('/auth/forgot-password', { email });
+    return res.data;
   } catch (error) {
     throw error;
   }
 };
+
+
+export const verifyCodeAndReset = async (email, code, newPassword) => {
+  try {
+    const res = await api.post('/auth/verify-reset-code', { email, code, newPassword });
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 // Change password (protected)
 export const changePassword = async (currentPassword, newPassword) => {

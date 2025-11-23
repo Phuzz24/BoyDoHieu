@@ -12,7 +12,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import BackToTop from './components/common/BackToTop';
 import Products from './pages/Product';
 import Contact from './pages/Contact.jsx';
-import Spa from './pages/Spa.jsx';
+import SpaLanding from './pages/SpaLanding.jsx';
+import SpaBookingForm from './pages/SpaBookingForm.jsx';
 import TermsAndConditions from './pages/TermsAndConditions.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
 import Favourites from './pages/Favourites.jsx';
@@ -20,6 +21,7 @@ import OrderSuccess from './pages/OrderSuccess.jsx';
 import OrderHistory from './pages/OrderHistory.jsx'; 
 import Profile from './pages/Profile.jsx';
 import ProtectedAdminRoute from './components/common/ProtectedAdminRoute'; // Từ trước
+import ResetPasswordNew from './pages/ResetPasswordNew.jsx';
 
 function AppContent() {
   const location = useLocation(); // Lấy path hiện tại
@@ -47,11 +49,13 @@ function AppContent() {
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/spa" element={<Spa />} />
+          <Route path="/spa" element={<SpaLanding />} />
+          <Route path="/spa-booking" element={<SpaBookingForm />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/favourites" element={<Favourites />} />
           <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+          <Route path="/reset-password" element={<ResetPasswordNew />} />
           <Route path="/order-history" element={<OrderHistory />} />
           <Route path="/account" element={<Profile />} />
         </Routes>

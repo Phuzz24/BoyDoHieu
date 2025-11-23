@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, ShoppingCart, Users, TrendingUp, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, TrendingUp, Settings, LogOut, Menu, X, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // THÊM: useNavigate
 import { useAuth } from '../../context/AuthContext'; // THÊM: useAuth
 
@@ -12,6 +12,7 @@ const Sidebar = ({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
     { id: 'products', label: 'Sản phẩm', icon: Package },
     { id: 'orders', label: 'Đơn hàng', icon: ShoppingCart },
     { id: 'users', label: 'Người dùng', icon: Users }, // Nếu đã thêm
+    { id: 'spa', label: 'Spa', icon: Sparkles },
     { id: 'analytics', label: 'Thống kê', icon: TrendingUp },
     { id: 'settings', label: 'Cài đặt', icon: Settings },
   ];

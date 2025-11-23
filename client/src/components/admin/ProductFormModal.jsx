@@ -1,344 +1,381 @@
+// src/components/admin/ProductFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Image, Plus, Trash2, Check, Eye } from 'lucide-react';
+import { X, Save, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import adminService from '../../services/adminService';
 
 const ProductFormModal = ({ product, onClose, mode = 'add' }) => {
+  const isViewMode = mode === 'view';
+  const isEditMode = mode === 'edit';
+
   const [formData, setFormData] = useState({
-    name: '', brand: '', price: 0, discountPrice: null, description: '',
-    category: '', isNew: false, sizes: [], colors: [], stock: 0, images: []
+    name: '',
+    brand: '',
+    price: 0,
+    discountPrice: null,
+    description: '',
+    category: '',
+    isNew: false,
+    colors: [],
+    sizes: []
   });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+
+  const [newSize, setNewSize] = useState('');
+  const [newQuantity, setNewQuantity] = useState('');
+  const [newColor, setNewColor] = useState('');
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // FIX: Close button và ESC gọi onClose(false) - không success
-  const handleClose = () => {
-    onClose(false); // False để không toast success
-  };
-
-  // ESC key handler
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') handleClose();
-    };
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-  }, []);
-  
   useEffect(() => {
     if (product) {
-      const discount = product.discountPrice && product.discountPrice > 0 ? product.discountPrice : null;
       setFormData({
         name: product.name || '',
         brand: product.brand || '',
-        price: Number(product.price) || 0, // FIX: Ensure number
-        discountPrice: discount,
+        price: product.price || 0,
+        discountPrice: product.discountPrice || null,
         description: product.description || '',
         category: product.category || '',
         isNew: product.isNew || false,
-        sizes: product.sizes || [],
         colors: product.colors || [],
-        stock: Number(product.stock) || 0, // FIX: Ensure number từ DB
-        images: product.images || []
+        sizes: product.sizes?.map(s => ({
+          size: s.size,
+          quantity: s.quantity || 0,
+          sold: s.sold || 0
+        })) || []
       });
-      setImagePreviews(product.images ? product.images.map(url => ({ url })) : []);
+
+      setImagePreviews(
+        product.images?.map(url => ({ url, isFromServer: true })) || []
+      );
     } else {
       setFormData({
         name: '', brand: '', price: 0, discountPrice: null, description: '',
-        category: '', isNew: false, sizes: [], colors: [], stock: 0, images: []
+        category: '', isNew: false, colors: [], sizes: []
       });
       setImagePreviews([]);
     }
   }, [product]);
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Tên sản phẩm là bắt buộc';
-    if (!formData.brand.trim()) newErrors.brand = 'Thương hiệu là bắt buộc';
-    if (formData.price <= 0) newErrors.price = 'Giá phải lớn hơn 0';
-    if (formData.stock < 0) newErrors.stock = 'Tồn kho không được âm'; // FIX: Validation < 0
-    if (!formData.description.trim()) newErrors.description = 'Mô tả là bắt buộc';
-    if (!formData.category.trim()) newErrors.category = 'Danh mục là bắt buộc';
-    if (formData.discountPrice !== null && formData.discountPrice >= formData.price) {
-      newErrors.discountPrice = 'Giá giảm phải nhỏ hơn giá gốc';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    let newValue = value;
-    if (type !== 'checkbox') {
-      if (name === 'stock') {
-        newValue = parseInt(value) || 0; // FIX: ParseInt cho stock, default 0 nếu empty
-      } else if (name === 'price' || name === 'discountPrice') {
-        newValue = parseFloat(value) || 0; // ParseFloat cho price/discount
-        if (name === 'discountPrice' && newValue === 0) newValue = null; // Null nếu 0
-      }
-    }
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : newValue
-    }));
-  };
-
-  const addArrayItem = (key, value) => {
-    if (value.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        [key]: [...prev[key], value]
-      }));
-    }
-  };
-
-  const removeArrayItem = (key, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [key]: prev[key].filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleImageChange = (e) => {
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
+    if (files.length + imagePreviews.length > 10) {
+      toast.warn('Tối đa 10 ảnh!');
+      return;
+    }
     files.forEach(file => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onload = (event) => {
-          setImagePreviews(prev => [...prev, { url: event.target.result, file }]);
+        reader.onloadend = () => {
+          setImagePreviews(prev => [...prev, { url: reader.result, file }]);
         };
         reader.readAsDataURL(file);
       }
     });
+    e.target.value = '';
   };
 
-  const removeImagePreview = (index) => {
+  const removeImage = (index) => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddSize = () => {
+    if (!newSize.trim()) return toast.warn('Nhập size!');
+    if (!newQuantity || Number(newQuantity) < 0) return toast.warn('Số lượng không hợp lệ!');
+    const exists = formData.sizes.some(s => s.size.toUpperCase() === newSize.trim().toUpperCase());
+    if (exists) return toast.warn('Size đã tồn tại!');
+    setFormData(prev => ({
+      ...prev,
+      sizes: [...prev.sizes, { size: newSize.trim(), quantity: Number(newQuantity), sold: 0 }]
+    }));
+    setNewSize('');
+    setNewQuantity('');
+  };
+
+  const handleRemoveSize = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      sizes: prev.sizes.filter((_, i) => i !== index)
+    }));
+  };
+
+  // ✅ SỬA: Đảm bảo cập nhật đúng state
+  const handleSizeChange = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.sizes];
+      if (field === 'quantity' || field === 'sold') {
+        updated[index][field] = Number(value) || 0;
+      } else {
+        updated[index][field] = value;
+      }
+      return { ...prev, sizes: updated };
+    });
+  };
+
+  const handleAddColor = () => {
+    if (newColor.trim() && !formData.colors.includes(newColor.trim())) {
+      setFormData(prev => ({ ...prev, colors: [...prev.colors, newColor.trim()] }));
+      setNewColor('');
+    }
+  };
+
+  const handleRemoveColor = (index) => {
+    setFormData(prev => ({ ...prev, colors: prev.colors.filter((_, i) => i !== index) }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    // ✅ VALIDATION TOÀN DIỆN
+    const trimmedName = formData.name.trim();
+    
+    if (!trimmedName) {
+      return toast.error('Tên sản phẩm bắt buộc');
+    }
+    
+    if (trimmedName.length < 3) {
+      return toast.error('Tên sản phẩm phải có ít nhất 3 ký tự');
+    }
+    
+    if (trimmedName.length > 200) {
+      return toast.error('Tên sản phẩm không được quá 200 ký tự');
+    }
+    
+    if (!formData.brand.trim()) {
+      return toast.error('Thương hiệu bắt buộc');
+    }
+    
+    if (formData.price <= 0) {
+      return toast.error('Giá phải > 0');
+    }
+    
+    if (formData.discountPrice && formData.discountPrice >= formData.price) {
+      return toast.error('Giá khuyến mãi phải nhỏ hơn giá gốc');
+    }
+    
+    if (!formData.description.trim()) {
+      return toast.error('Mô tả bắt buộc');
+    }
+    
+    if (!formData.category.trim()) {
+      return toast.error('Danh mục bắt buộc');
+    }
+    
+    if (formData.sizes.length === 0) {
+      return toast.error('Phải có ít nhất 1 size');
+    }
+    
+    // ✅ Validate sizes không trùng
+    const sizeNames = formData.sizes.map(s => s.size.toUpperCase());
+    const uniqueSizes = new Set(sizeNames);
+    if (sizeNames.length !== uniqueSizes.size) {
+      return toast.error('Có size bị trùng! Vui lòng kiểm tra lại.');
+    }
+    
+    if (imagePreviews.length === 0) {
+      return toast.error('Phải có ít nhất 1 ảnh');
+    }
+
+    const submitData = new FormData();
+
+    // Basic info
+    submitData.append('name', trimmedName);  // ✅ Dùng trimmed name
+    submitData.append('brand', formData.brand);
+    submitData.append('price', formData.price);
+    if (formData.discountPrice) submitData.append('discountPrice', formData.discountPrice);
+    submitData.append('description', formData.description);
+    submitData.append('category', formData.category);
+    submitData.append('isNew', formData.isNew);
+
+    // ✅ CRITICAL FIX: GỬI ĐÚNG FORMAT CHO MULTER
+    console.log('📦 Preparing sizes for submission:', formData.sizes);
+    
+    // ❌ KHÔNG GỬI NHƯ NÀY:
+    // submitData.append('sizes', JSON.stringify(formData.sizes));
+    
+    // ✅ PHẢI GỬI TỪNG FIELD RIÊNG LẺ:
+    formData.sizes.forEach((s, i) => {
+      const sizeKey = `sizes[${i}][size]`;
+      const quantityKey = `sizes[${i}][quantity]`;
+      const soldKey = `sizes[${i}][sold]`;
+      
+      submitData.append(sizeKey, s.size);
+      submitData.append(quantityKey, Number(s.quantity));
+      submitData.append(soldKey, Number(s.sold) || 0);
+      
+      console.log(`  ${sizeKey}: ${s.size}`);
+      console.log(`  ${quantityKey}: ${s.quantity}`);
+      console.log(`  ${soldKey}: ${s.sold || 0}`);
+    });
+    
+    console.log('✅ Sizes added to FormData');
+
+    // Colors - ✅ SỬA: Gửi đúng format
+    if (formData.colors && formData.colors.length > 0) {
+      formData.colors.forEach((color, idx) => {
+        submitData.append('colors', color);
+        console.log(`  colors[${idx}]: ${color}`);
+      });
+    }
+
+    // New images
+    const newImages = imagePreviews.filter(img => img.file);
+    newImages.forEach(img => submitData.append('images', img.file));
+
+    // Existing images (for edit mode)
+    if (isEditMode) {
+      const oldImages = imagePreviews
+        .filter(img => img.isFromServer)
+        .map(img => img.url);
+      oldImages.forEach(url => submitData.append('existingImages', url));
+    }
+
+    // Debug log
+    console.log('📦 Submitting form data:');
+    console.log('Sizes:', formData.sizes);
+    for (let pair of submitData.entries()) {
+      console.log(pair[0] + ':', pair[1]);
+    }
 
     setLoading(true);
     try {
-      const submitData = { 
-        ...formData, 
-        images: imagePreviews.map(p => p.url).filter(url => url)
-      };
-      if (mode === 'edit') {
-        await adminService.updateProduct(product._id, submitData);
-        onClose(true); // Chỉ gọi true khi submit success
+      let response;
+      if (isEditMode) {
+        response = await adminService.updateProduct(product._id, submitData);
+        toast.success('Cập nhật sản phẩm thành công!');
       } else {
-        await adminService.createProduct(submitData);
-        onClose(true);
+        response = await adminService.createProduct(submitData);
+        toast.success('Thêm sản phẩm thành công!');
       }
+      console.log('✅ Server response:', response);
+      
+      // ✅ Trả về product data để parent component cập nhật ngay
+      onClose(true, response);  // Truyền thêm response
     } catch (error) {
-      console.error('Error saving product:', error);
-      setErrors({ submit: 'Lỗi lưu sản phẩm: ' + error.message });
+      console.error('❌ Submit error:', error);
+      toast.error(error.response?.data?.message || 'Lỗi hệ thống!');
     } finally {
       setLoading(false);
     }
   };
 
-  const isViewMode = mode === 'view';
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-2xl">
-          <h3 className="text-xl font-bold text-gray-900">
-            {isViewMode ? 'Xem sản phẩm' : (product ? 'Sửa sản phẩm' : 'Thêm sản phẩm')}
-          </h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <X className="w-5 h-5 text-gray-500" />
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b px-8 py-5 flex justify-between items-center z-10">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {isViewMode ? 'Xem chi tiết sản phẩm' : isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
+          </h2>
+          <button onClick={() => onClose(false)} className="p-3 hover:bg-gray-100 rounded-full transition">
+            <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Basic Info */}
+        <form onSubmit={handleSubmit} className="p-8 space-y-8">
+          {/* Tên + Thương hiệu */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tên sản phẩm *</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Nhập tên sản phẩm"
-                required={!isViewMode}
+              <label className="block text-sm font-semibold mb-2">Tên sản phẩm *</label>
+              <input 
+                type="text" 
+                value={formData.name} 
+                onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                disabled={isViewMode} 
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                required 
               />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Thương hiệu *</label>
-              <input
-                type="text"
-                name="brand"
-                value={formData.brand}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                  errors.brand ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Nhập thương hiệu"
-                required={!isViewMode}
+              <label className="block text-sm font-semibold mb-2">Thương hiệu *</label>
+              <input 
+                type="text" 
+                value={formData.brand} 
+                onChange={e => setFormData({ ...formData, brand: e.target.value })} 
+                disabled={isViewMode} 
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500" 
+                required 
               />
-              {errors.brand && <p className="text-red-500 text-sm mt-1">{errors.brand}</p>}
             </div>
           </div>
 
-          {/* Price & Discount */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Giá + Giá giảm + Danh mục */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Giá gốc *</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                  errors.price ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0"
-                min="0"
-                step="0.01"
-                required={!isViewMode}
+              <label className="block text-sm font-semibold mb-2">Giá gốc (VNĐ) *</label>
+              <input 
+                type="number" 
+                value={formData.price} 
+                onChange={e => setFormData({ ...formData, price: Number(e.target.value) || 0 })} 
+                disabled={isViewMode} 
+                className="w-full px-4 py-3 border rounded-lg" 
+                min="1" 
+                required 
               />
-              {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Giá giảm (tùy chọn, &lt; giá gốc)</label>
-              <input
-                type="number"
-                name="discountPrice"
-                value={formData.discountPrice || ''} // Hiển thị empty nếu null
-                onChange={handleChange}
-                disabled={isViewMode}
-                className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                  errors.discountPrice ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="0"
-                min="0"
-                step="0.01"
+              <label className="block text-sm font-semibold mb-2">Giá khuyến mãi</label>
+              <input 
+                type="number" 
+                value={formData.discountPrice || ''} 
+                onChange={e => setFormData({ ...formData, discountPrice: e.target.value ? Number(e.target.value) : null })} 
+                disabled={isViewMode} 
+                className="w-full px-4 py-3 border rounded-lg" 
               />
-              {errors.discountPrice && <p className="text-red-500 text-sm mt-1">{errors.discountPrice}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold mb-2">Danh mục *</label>
+              <input 
+                type="text" 
+                value={formData.category} 
+                onChange={e => setFormData({ ...formData, category: e.target.value })} 
+                disabled={isViewMode} 
+                className="w-full px-4 py-3 border rounded-lg" 
+                required 
+              />
             </div>
           </div>
 
-          {/* Description */}
+          {/* Mô tả */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả sản phẩm *</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              disabled={isViewMode}
-              rows={4}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                errors.description ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Mô tả chi tiết sản phẩm..."
-              required={!isViewMode}
+            <label className="block text-sm font-semibold mb-2">Mô tả sản phẩm *</label>
+            <textarea 
+              value={formData.description} 
+              onChange={e => setFormData({ ...formData, description: e.target.value })} 
+              disabled={isViewMode} 
+              rows={5} 
+              className="w-full px-4 py-3 border rounded-lg" 
+              required 
             />
-            {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
           </div>
 
-          {/* Category */}
+          {/* Màu sắc */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Danh mục *</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              disabled={isViewMode}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                errors.category ? 'border-red-500' : 'border-gray-300'
-              }`}
-              required={!isViewMode}
-            >
-              <option value="">Chọn danh mục</option>
-              <option value="men">Nam</option>
-              <option value="women">Nữ</option>
-              <option value="kids">Trẻ em</option>
-              <option value="accessories">Phụ kiện</option>
-            </select>
-            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
-          </div>
-
-          {/* Is New Checkbox */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              name="isNew"
-              checked={formData.isNew}
-              onChange={handleChange}
-              disabled={isViewMode}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label className="ml-2 block text-sm font-medium text-gray-700">Sản phẩm mới</label>
-          </div>
-
-          {/* Stock */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tồn kho *</label>
-            <input
-              type="number"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              disabled={isViewMode}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-not-allowed ${
-                errors.stock ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="0"
-              min="0"
-              required={!isViewMode}
-            />
-            {errors.stock && <p className="text-red-500 text-sm mt-1">{errors.stock}</p>}
-          </div>
-
-          {/* Sizes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sizes</label>
-            <div className="flex gap-2">
-              <input
-                id="sizeInput"
-                type="text"
-                placeholder="e.g., M, L, XL"
-                className="flex-1 p-2 border border-gray-300 rounded"
-                disabled={isViewMode}
+            <label className="block text-sm font-semibold mb-3">Màu sắc</label>
+            <div className="flex gap-3 mb-4">
+              <input 
+                type="text" 
+                value={newColor} 
+                onChange={e => setNewColor(e.target.value)} 
+                onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddColor())} 
+                disabled={isViewMode} 
+                placeholder="Nhập màu..." 
+                className="flex-1 px-4 py-3 border rounded-lg" 
               />
-              <button
-                type="button"
-                onClick={() => addArrayItem('sizes', document.getElementById('sizeInput').value)}
-                disabled={isViewMode}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              <button 
+                type="button" 
+                onClick={handleAddColor} 
+                disabled={isViewMode} 
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
               >
-                <Plus className="w-4 h-4 inline -ml-1 mr-1" />
                 Thêm
               </button>
             </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {formData.sizes.map((size, idx) => (
-                <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full flex items-center">
-                  {size}
+            <div className="flex flex-wrap gap-3">
+              {formData.colors.map((c, i) => (
+                <span key={i} className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full">
+                  {c}
                   {!isViewMode && (
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('sizes', idx)}
-                      className="ml-2 hover:bg-blue-200 rounded-full p-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
+                    <button type="button" onClick={() => handleRemoveColor(i)} className="hover:text-purple-600">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                 </span>
@@ -346,102 +383,140 @@ const ProductFormModal = ({ product, onClose, mode = 'add' }) => {
             </div>
           </div>
 
-          {/* Colors */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Colors</label>
-            <div className="flex gap-2">
-              <input
-                id="colorInput"
-                type="text"
-                placeholder="e.g., red, blue, black"
-                className="flex-1 p-2 border border-gray-300 rounded"
-                disabled={isViewMode}
-              />
-              <button
-                type="button"
-                onClick={() => addArrayItem('colors', document.getElementById('colorInput').value)}
-                disabled={isViewMode}
-                className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
-              >
-                <Plus className="w-4 h-4 inline -ml-1 mr-1" />
-                Thêm
-              </button>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {formData.colors.map((color, idx) => (
-                <span key={idx} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full flex items-center">
-                  {color}
-                  {!isViewMode && (
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem('colors', idx)}
-                      className="ml-2 hover:bg-purple-200 rounded-full p-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Images Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hình ảnh</label>
-            {!isViewMode ? (
-              <div>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="w-full p-2 border border-gray-300 rounded cursor-pointer"
-                />
-                <p className="text-sm text-gray-500 mt-1">Chọn nhiều file, preview sẽ hiển thị bên dưới</p>
-              </div>
-            ) : null}
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              {imagePreviews
-                .filter(p => p && p.url) // Filter null
-                .map((preview, idx) => (
-                  <div key={idx} className="relative group">
-                    <img src={preview.url} alt={`Preview ${idx + 1}`} className="w-full h-24 object-cover rounded" />
-                    {!isViewMode && (
-                      <button
-                        type="button"
-                        onClick={() => removeImagePreview(idx)}
-                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
+          {/* Size & tồn kho */}
+          <div className="bg-blue-50 p-6 rounded-2xl">
+            <h3 className="text-xl font-bold mb-4">Quản lý kích thước & tồn kho</h3>
+            <div className="space-y-4 mb-6">
+              {formData.sizes.map((item, i) => (
+                <div key={i} className="flex items-center gap-4 bg-white p-4 rounded-xl">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">Size</label>
+                    <input 
+                      type="text" 
+                      value={item.size} 
+                      onChange={e => handleSizeChange(i, 'size', e.target.value)} 
+                      disabled={isViewMode} 
+                      className="w-full px-4 py-2 border rounded text-center font-bold disabled:bg-gray-100" 
+                    />
                   </div>
-                ))}
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">Số lượng</label>
+                    <input 
+                      type="number" 
+                      value={item.quantity} 
+                      onChange={e => handleSizeChange(i, 'quantity', e.target.value)} 
+                      disabled={isViewMode} 
+                      className="w-full px-4 py-2 border rounded text-center disabled:bg-gray-100" 
+                      min="0"
+                    />
+                  </div>
+                  {!isViewMode && (
+                    <button 
+                      type="button" 
+                      onClick={() => handleRemoveSize(i)} 
+                      className="text-red-600 hover:text-red-700 p-2"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {!isViewMode && (
+              <div className="flex gap-4">
+                <input 
+                  type="text" 
+                  value={newSize} 
+                  onChange={e => setNewSize(e.target.value)} 
+                  placeholder="Size (VD: M)" 
+                  className="flex-1 px-4 py-3 border rounded-lg" 
+                />
+                <input 
+                  type="number" 
+                  value={newQuantity} 
+                  onChange={e => setNewQuantity(e.target.value)} 
+                  placeholder="Số lượng" 
+                  className="w-40 px-4 py-3 border rounded-lg text-center" 
+                  min="0"
+                />
+                <button 
+                  type="button" 
+                  onClick={handleAddSize} 
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+                >
+                  <Plus className="w-5 h-5" /> Thêm size
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Ảnh */}
+          <div>
+            <label className="block text-sm font-semibold mb-3">Hình ảnh sản phẩm *</label>
+            {!isViewMode && (
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  className="hidden" 
+                  id="image-upload" 
+                />
+                <label htmlFor="image-upload" className="cursor-pointer">
+                  <div className="text-6xl text-gray-400 mb-4">📤</div>
+                  <p className="text-font-medium">Click để upload ảnh (tối đa 10)</p>
+                </label>
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              {imagePreviews.map((img, i) => (
+                <div key={i} className="relative group">
+                  <img src={img.url} alt="" className="w-full h-40 object-cover rounded-xl shadow" />
+                  {!isViewMode && (
+                    <button 
+                      type="button" 
+                      onClick={() => removeImage(i)} 
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
-          {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
+          <div className="flex items-center gap-3">
+            <input 
+              type="checkbox" 
+              checked={formData.isNew} 
+              onChange={e => setFormData({ ...formData, isNew: e.target.checked })} 
+              disabled={isViewMode} 
+              className="w-5 h-5" 
+            />
+            <label className="text-lg font-medium">Đánh dấu là sản phẩm mới</label>
+          </div>
 
-          {/* Buttons */}
-          {!isViewMode && (
-            <div className="flex gap-3 pt-4 border-t">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition"
+          <div className="flex justify-end gap-4 pt-8 border-t">
+            <button 
+              type="button" 
+              onClick={() => onClose(false)} 
+              className="px-8 py-4 border border-gray-300 rounded-xl text-lg font-medium hover:bg-gray-50"
+            >
+              Hủy
+            </button>
+            {!isViewMode && (
+              <button 
+                type="submit" 
+                disabled={loading} 
+                className="px-10 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl text-lg font-bold flex items-center gap-3 disabled:opacity-50"
               >
-                <Save className="w-5 h-5" />
-                {loading ? 'Đang lưu...' : 'Lưu sản phẩm'}
+                <Save className="w-6 h-6" />
+                {loading ? 'Đang lưu...' : (isEditMode ? 'Cập nhật' : 'Thêm sản phẩm')}
               </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
-              >
-                Hủy
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
       </div>
     </div>

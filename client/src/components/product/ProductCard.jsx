@@ -1,8 +1,8 @@
+// src/components/product/ProductCard.jsx – CHỈ SỬA LOGIC, GIỮ NGUYÊN GIAO DIỆN CŨ 100%
 import React, { useState, useEffect } from 'react';
 import { FaShoppingCart, FaHeart } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { handleAddToCartLogic } from '../../utils/cartUtils';
 import { useCart } from '../../context/CartContext';
 import { useFavorite } from '../../context/FavoriteContext';
 import { useAuth } from '../../context/AuthContext';
@@ -11,13 +11,13 @@ const ProductCard = ({ product }) => {
   const { user } = useAuth();
   const { addToCart } = useCart();
   const { addToFavorites, removeFromFavorites, isFavorite, favorites } = useFavorite();
-  const [favorite, setFavorite] = useState(isFavorite(product._id));
-  const [currentImage, setCurrentImage] = useState(product.image || product.images?.[0] || 'https://placeholder.com/300x300?text=No+Image');
-  const [isHovering, setIsHovering] = useState(false); // Để control fade transition
+  const [favorite, setFavorite] = useState(false);
+  const [currentImage, setCurrentImage] = useState(product.images?.[0] || product.image || 'https://placeholder.com/300x300?text=No+Image');
+  const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
     setFavorite(isFavorite(product._id));
-  }, [favorites, product._id]);
+  }, [favorites, product._id, isFavorite]);
 
   const handleMouseEnter = () => {
     if (product.images?.[1]) {
@@ -27,23 +27,37 @@ const ProductCard = ({ product }) => {
   };
 
   const handleMouseLeave = () => {
-    setCurrentImage(product.image || product.images?.[0] || 'https://placeholder.com/300x300?text=No+Image');
+    setCurrentImage(product.images?.[0] || product.image || 'https://placeholder.com/300x300?text=No+Image');
     setIsHovering(false);
   };
+
+  // FIX: Kiểm tra tồn kho theo sizes object mới
+const isOutOfStock = product.sizes && product.sizes.length > 0
+  ? product.sizes.every(s => !s.quantity || s.quantity <= 0)
+  : (!product.stock || product.stock <= 0);
+
+// Size mặc định
+const availableSizeObj = product.sizes?.find(s => s.quantity > 0);
+const defaultSize = availableSizeObj ? availableSizeObj.size : null;
 
   const handleClick = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    const convertedProduct = {
+
+    if (isOutOfStock) {
+      toast.error('Sản phẩm đã hết hàng!');
+      return;
+    }
+
+    const cartItem = {
       ...product,
       images: product.images || [product.image],
+      selectedSize: defaultSize,  // Dùng size có hàng đầu tiên
+      selectedColor: product.colors?.[0] || null,
     };
-    const result = handleAddToCartLogic(convertedProduct, product.sizes?.[0], product.colors?.[0], addToCart);
-    if (result.success) {
-      toast.success(result.message, { autoClose: 3000 });
-    } else {
-      toast.error(result.message, { autoClose: 3000 });
-    }
+
+    addToCart(cartItem);
+    toast.success(`${product.name} đã được thêm vào giỏ hàng!`, { autoClose: 3000 });
   };
 
   const handleFavoriteClick = (e) => {
@@ -53,10 +67,6 @@ const ProductCard = ({ product }) => {
       toast.error('Vui lòng đăng nhập để thêm yêu thích!');
       return;
     }
-    if (!product?._id) {
-      toast.error('Sản phẩm không hợp lệ!');
-      return;
-    }
     if (favorite) {
       removeFromFavorites(product._id);
     } else {
@@ -64,10 +74,7 @@ const ProductCard = ({ product }) => {
     }
   };
 
-  const discountPercent =
-    product.discountPrice && Math.round(((product.price - product.discountPrice) / product.price) * 100);
-
-  const isOutOfStock = product.stock === 0;
+  const discountPercent = product.discountPrice && Math.round(((product.price - product.discountPrice) / product.price) * 100);
 
   return (
     <div className="bg-luxuryWhite dark:bg-gray-800 rounded-xl shadow-md overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-gray-200 dark:border-gray-700">
@@ -79,16 +86,11 @@ const ProductCard = ({ product }) => {
             className={`w-full h-full object-cover transition-all duration-300 ease-in-out ${isHovering ? 'opacity-100 scale-110' : 'opacity-100'}`}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            loading="lazy" // Optimize tải ảnh
+            loading="lazy"
           />
-          {/* Preload ảnh thứ 2 để tải trước, tránh delay */}
+          {/* Preload ảnh thứ 2 */}
           {product.images?.[1] && (
-            <img
-              src={product.images[1]}
-              alt="preload"
-              className="hidden"
-              loading="eager" // Tải ngay lập tức
-            />
+            <img src={product.images[1]} alt="preload" className="hidden" loading="eager" />
           )}
 
           {product.isNew && (
